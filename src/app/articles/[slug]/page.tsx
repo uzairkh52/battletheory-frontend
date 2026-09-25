@@ -1,75 +1,43 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import API from '@/lib/api';
 import Link from 'next/link';
+import { useAppDispatch, useAppSelector } from '@/store/hooks'; // Path apne project ke hisab se adjust karein
+import { fetchArticleBySlug, addCommentBySlug } from '@/store/slices/articleSlice';
 
-interface Comment {
-  _id: string;
-  author?: { username: string };
-  text: string;
-  createdAt: string;
-}
-
-interface Article {
-  _id: string;
-  title: string;
-  slug: string;
-  summary: string;
-  content: string;
-  createdAt: string;
-  comments?: Comment[];
-}
-
-export default function ArticleDetailPage({ params }: { params: Promise<{ slug: string }> | { slug: string } }) {
+export default function ArticleDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }> | { slug: string };
+}) {
   const resolvedParams = params instanceof Promise ? use(params) : params;
   const slug = resolvedParams?.slug;
 
-  const [article, setArticle] = useState<Article | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [newComment, setNewComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const dispatch = useAppDispatch();
+  const { article, loading, submittingComment, error } = useAppSelector(
+    (state) => state.article
+  );
 
-  const fetchArticle = async () => {
-    if (!slug) return;
-    setLoading(true);
-    try {
-      const cleanSlug = decodeURIComponent(slug);
-      const res = await API.get(`/articles/${cleanSlug}`);
-      setArticle(res.data);
-      setError(false);
-    } catch (err) {
-      console.error('Failed to fetch article briefing:', err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
-    fetchArticle();
-  }, [slug]);
+    if (slug) {
+      dispatch(fetchArticleBySlug(slug));
+    }
+  }, [slug, dispatch]);
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !article) return;
+    if (!newComment.trim() || !slug) return;
 
-    setSubmitting(true);
-    try {
-      await API.post(`/articles/${article._id}/comments`, { text: newComment });
+    const result = await dispatch(
+      addCommentBySlug({ slug, text: newComment })
+    );
+
+    if (addCommentBySlug.fulfilled.match(result)) {
       setNewComment('');
-      fetchArticle();
-    } catch (err: any) {
-      console.error('Comment error details:', err.response?.data || err);
-      const errorMsg =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to post comment.';
-      alert(errorMsg);
-    } finally {
-      setSubmitting(false);
+    } else if (addCommentBySlug.rejected.match(result)) {
+      alert(result.payload || 'Failed to post comment.');
     }
   };
 
@@ -90,7 +58,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
           CLASSIFIED RECORD NOT FOUND
         </h2>
         <p className="text-xs font-mono text-gray-400">
-          The requested tactical article dossier does not exist or has been redacted.
+          {error || 'The requested tactical article dossier does not exist or has been redacted.'}
         </p>
         <Link
           href="/articles"
@@ -120,10 +88,11 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
             TACTICAL ANALYSIS
           </span>
           <span className="text-xs font-mono text-gray-500">
-            LOG DATE: {new Date(article.createdAt).toLocaleDateString('en-US', {
+            LOG DATE:{' '}
+            {new Date(article.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
-              day: 'numeric'
+              day: 'numeric',
             })}
           </span>
         </div>
@@ -165,10 +134,10 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
           />
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submittingComment}
             className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 text-black font-bold text-xs uppercase tracking-wider rounded transition-colors"
           >
-            {submitting ? 'TRANSMITTING...' : 'POST DEBRIEFING'}
+            {submittingComment ? 'TRANSMITTING...' : 'POST DEBRIEFING'}
           </button>
         </form>
 
@@ -176,7 +145,10 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
         <div className="space-y-3 pt-4 border-t border-gray-800">
           {article.comments && article.comments.length > 0 ? (
             article.comments.map((c) => (
-              <div key={c._id} className="p-3 bg-[#0b0f19] border border-gray-800 rounded space-y-1">
+              <div
+                key={c._id}
+                className="p-3 bg-[#0b0f19] border border-gray-800 rounded space-y-1"
+              >
                 <div className="flex justify-between items-center text-[10px] font-mono">
                   <span className="text-amber-500 font-bold">
                     {c.author?.username || 'GUEST OPERATIVE'}
@@ -189,7 +161,9 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
               </div>
             ))
           ) : (
-            <p className="text-xs font-mono text-gray-500">No field observations recorded yet.</p>
+            <p className="text-xs font-mono text-gray-500">
+              No field observations recorded yet.
+            </p>
           )}
         </div>
       </section>

@@ -1,48 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { setCredentials } from '@/store/slices/authSlice';
-import API from '@/lib/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { loginUser } from '@/store/slices/authSlice';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  
-  const dispatch = useDispatch();
+
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    try {
-      const res = await API.post('/auth/login', { email, password });
-      
-      // Backend returns: { _id, username, email, isAdmin, token }
-      const token = res.data.token;
-      
-      // Extract user object (excluding token)
-      const userData = {
-        _id: res.data._id,
-        username: res.data.username,
-        email: res.data.email,
-        isAdmin: res.data.isAdmin,
-      };
+    const resultAction = await dispatch(loginUser({ email, password }));
 
-      // Dispatch to Redux (setCredentials updates redux + localStorage properly)
-      dispatch(setCredentials({ user: userData, token }));
-
-      // Redirect based on role
-      if (userData.isAdmin) {
+    if (loginUser.fulfilled.match(resultAction)) {
+      const user = resultAction.payload.user;
+      if (user.isAdmin) {
         router.push('/admin');
       } else {
         router.push('/');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Authentication failed');
     }
   };
 
@@ -50,7 +34,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-[70vh]">
       <form onSubmit={handleSubmit} className="military-card p-8 w-full max-w-md space-y-4">
         <h2 className="text-xl font-black text-amber-500 uppercase tracking-widest text-center">
-          Commander Authentication
+          User Login
         </h2>
 
         {error && (
@@ -81,9 +65,26 @@ export default function LoginPage() {
           />
         </div>
 
-        <button type="submit" className="w-full py-3 bg-amber-600 hover:bg-amber-500 text-black font-bold text-xs uppercase tracking-wider rounded transition-colors">
-          Authorize Access
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 text-black font-bold text-xs uppercase tracking-wider rounded transition-colors"
+        >
+          {loading ? 'Logging in...' : 'Login'}
         </button>
+
+        {/* Normal Register Navigation Link */}
+        <div className="pt-4 border-t border-gray-800/80 text-center">
+          <p className="text-xs text-gray-400 font-mono">
+            Don't have an account?{' '}
+            <Link
+              href="/register"
+              className="text-amber-500 font-bold hover:underline uppercase ml-1"
+            >
+              Register Here →
+            </Link>
+          </p>
+        </div>
       </form>
     </div>
   );

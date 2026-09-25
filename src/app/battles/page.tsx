@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import API from '@/lib/api';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAllBattles, Battle } from '@/store/slices/battleSlice';
 
 // SSR Bypass for Leaflet Map
 const BattleMap = dynamic(() => import('@/components/BattleMap'), {
@@ -17,35 +18,23 @@ const BattleMap = dynamic(() => import('@/components/BattleMap'), {
   ),
 });
 
-interface Battle {
-  _id: string;
-  name?: string;
-  title?: string;
-  slug?: string;
-  year: string | number;
-  location: string;
-  theater: string;
-  description?: string;
-  summary?: string;
-  coordinates?: { lat: number; lng: number };
-  tacticalPhases?: { phaseName: string; details: string }[];
-}
-
 export default function BattlesVisualizerPage() {
-  const [battles, setBattles] = useState<Battle[]>([]);
+  const dispatch = useAppDispatch();
+  const { battles, loading, error } = useAppSelector((state) => state.battles);
+
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
   const [filterTheater, setFilterTheater] = useState<string>('All');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    API.get('/battles')
-      .then((res) => {
-        setBattles(res.data);
-        if (res.data.length > 0) setSelectedBattle(res.data[0]);
-      })
-      .catch((err) => console.error('Failed to load battles:', err))
-      .finally(() => setLoading(false));
-  }, []);
+    dispatch(fetchAllBattles());
+  }, [dispatch]);
+
+  // Default selection jab battles load ho jayein
+  useEffect(() => {
+    if (battles.length > 0 && !selectedBattle) {
+      setSelectedBattle(battles[0]);
+    }
+  }, [battles, selectedBattle]);
 
   const filteredBattles =
     filterTheater === 'All'
@@ -91,6 +80,10 @@ export default function BattlesVisualizerPage() {
         <p className="text-xs font-mono text-amber-500 animate-pulse">
           [ LOADING GEOSPATIAL TACTICAL DATA... ]
         </p>
+      ) : error ? (
+        <div className="p-4 bg-red-900/30 border border-red-800 text-red-400 text-xs font-mono rounded">
+          {error}
+        </div>
       ) : (
         <div className="space-y-6">
           {/* Interactive Tactical Map */}

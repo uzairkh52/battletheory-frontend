@@ -1,27 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import API from '@/lib/api';
+import { useEffect } from 'react';
 import Link from 'next/link';
-
-interface Article {
-  _id: string;
-  title: string;
-  slug: string;
-  summary: string;
-  createdAt: string;
-}
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+// FIXED: fetchArticles ko replace karke fetchAllArticles import karein
+import { fetchAllArticles } from '@/store/slices/articleSlice';
 
 export default function ArticlesListPage() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  const { articles = [], loading, error } = useAppSelector((state) => state.articles);
 
   useEffect(() => {
-    API.get('/articles')
-      .then((res) => setArticles(res.data))
-      .catch((err) => console.error('Failed to fetch articles:', err))
-      .finally(() => setLoading(false));
-  }, []);
+    // FIXED: fetchAllArticles dispatch karein
+    dispatch(fetchAllArticles());
+  }, [dispatch]);
 
   return (
     <div className="max-w-6xl mx-auto my-8 px-4 space-y-6">
@@ -38,6 +30,10 @@ export default function ArticlesListPage() {
         <p className="text-xs font-mono text-amber-500 animate-pulse">
           [ DECRYPTING ARCHIVE INDEX... ]
         </p>
+      ) : error ? (
+        <div className="p-4 bg-red-900/30 border border-red-800 text-red-400 text-xs font-mono rounded">
+          {error}
+        </div>
       ) : articles.length === 0 ? (
         <div className="p-8 text-center border border-dashed border-gray-800 rounded">
           <p className="text-xs font-mono text-gray-500 uppercase">

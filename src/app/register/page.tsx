@@ -2,34 +2,27 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
-import API from '@/lib/api';
-import { setCredentials } from '@/store/slices/authSlice';
+import { AppDispatch, RootState } from '@/store/store';
+import { registerUser } from '@/store/slices/authSlice';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error } = useSelector((state: RootState) => state.auth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
 
-    try {
-      const { data } = await API.post('/auth/register', { username, email, password });
-      dispatch(setCredentials({ user: data.user, token: data.token }));
+    const resultAction = await dispatch(registerUser({ username, email, password }));
+
+    if (registerUser.fulfilled.match(resultAction)) {
       router.push('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -39,7 +32,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-black tracking-wider text-amber-500 uppercase">
           Request Field Clearance
         </h1>
-        <p className="text-xs text-gray-400">Register new officer profile</p>
+        <p className="text-xs text-gray-400">Register new profile</p>
       </div>
 
       {error && (
@@ -50,14 +43,14 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-mono text-gray-400 mb-1">CALLSIGN / USERNAME</label>
+          <label className="block text-xs font-mono text-gray-400 mb-1">USERNAME</label>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
             className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-            placeholder="Cmdr_Vanguard"
+            placeholder="Vanguard"
           />
         </div>
 
@@ -69,7 +62,7 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-            placeholder="cmdr@battletheory.com"
+            placeholder="user@battletheory.com"
           />
         </div>
 

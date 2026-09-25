@@ -1,69 +1,46 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import API from '@/lib/api';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  fetchBattleByIdOrSlug,
+  addBattleComment,
+  clearBattleState,
+} from '@/store/slices/battleSlice';
 
-interface Comment {
-  _id: string;
-  text?: string;
-  content?: string;
-  author?: { username: string };
-  createdAt: string;
-}
-
-interface Battle {
-  _id: string;
-  name?: string;
-  title?: string;
-  year?: string | number;
-  location?: string;
-  theater?: string;
-  description?: string;
-  summary?: string;
-  tacticalPhases?: { phaseName: string; details: string }[];
-  comments?: Comment[];
-}
-
-export default function BattleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function BattleDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = use(params);
-  const [battle, setBattle] = useState<Battle | null>(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+
+  const {
+    currentBattle: battle,
+    loading,
+    submittingComment,
+    error,
+  } = useAppSelector((state) => state.battles);
+
   const [commentText, setCommentText] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    API.get(`/battles/${slug}`)
-      .then((res) => {
-        setBattle(res.data);
-      })
-      .catch((err) => console.error('Error loading battle:', err))
-      .finally(() => setLoading(false));
-  }, [slug]);
+    dispatch(fetchBattleByIdOrSlug(slug));
+
+    return () => {
+      dispatch(clearBattleState());
+    };
+  }, [dispatch, slug]);
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim() || !battle) return;
 
-    setSubmitting(true);
-    try {
-      const res = await API.post(`/battles/${battle._id}/comments`, {
-        text: commentText,
-      });
-
-      setBattle((prev) =>
-        prev
-          ? {
-              ...prev,
-              comments: [res.data, ...(prev.comments || [])],
-            }
-          : null
-      );
-      setCommentText('');
-    } catch (err) {
-      console.error('Failed to post comment:', err);
-    } finally {
-      setSubmitting(false);
-    }
+    await dispatch(
+      addBattleComment({ battleId: battle._id, text: commentText })
+    );
+    setCommentText('');
   };
 
   if (loading) {
@@ -76,17 +53,21 @@ export default function BattleDetailPage({ params }: { params: Promise<{ slug: s
     );
   }
 
-  if (!battle) {
+  if (error || !battle) {
     return (
       <div className="max-w-4xl mx-auto my-12 text-center">
-        <p className="text-red-500 font-mono text-sm">Battle records not found.</p>
+        <p className="text-red-500 font-mono text-sm">
+          {error || 'Battle records not found.'}
+        </p>
       </div>
     );
   }
 
-  // Dynamic field fallbacks
   const battleTitle = battle.title || battle.name || 'CLASSIFIED ENGAGEMENT';
-  const battleOverview = battle.description || battle.summary || 'No briefing details logged for this record.';
+  const battleOverview =
+    battle.description ||
+    battle.summary ||
+    'No briefing details logged for this record.';
 
   return (
     <div className="max-w-4xl mx-auto my-8 px-4 space-y-8">
@@ -134,10 +115,17 @@ export default function BattleDetailPage({ params }: { params: Promise<{ slug: s
           </h3>
           <div className="space-y-3">
             {battle.tacticalPhases.map((phase, idx) => (
-              <div key={idx} className="bg-[#111827] border border-gray-800 p-4 rounded-lg flex gap-4">
-                <span className="text-xs font-mono text-amber-500 font-bold">0{idx + 1}.</span>
+              <div
+                key={idx}
+                className="bg-[#111827] border border-gray-800 p-4 rounded-lg flex gap-4"
+              >
+                <span className="text-xs font-mono text-amber-500 font-bold">
+                  0{idx + 1}.
+                </span>
                 <div>
-                  <h4 className="text-sm font-bold text-white uppercase">{phase.phaseName}</h4>
+                  <h4 className="text-sm font-bold text-white uppercase">
+                    {phase.phaseName}
+                  </h4>
                   <p className="text-xs text-gray-400 mt-1">{phase.details}</p>
                 </div>
               </div>
@@ -162,10 +150,10 @@ export default function BattleDetailPage({ params }: { params: Promise<{ slug: s
           />
           <button
             type="submit"
-            disabled={submitting || !commentText.trim()}
+            disabled={submittingComment || !commentText.trim()}
             className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-black font-black text-xs uppercase tracking-widest rounded disabled:opacity-50 transition-colors"
           >
-            {submitting ? 'FILING ASSESSMENT...' : 'POST ASSESSMENT'}
+            {submittingComment ? 'FILING ASSESSMENT...' : 'POST ASSESSMENT'}
           </button>
         </form>
 
@@ -173,7 +161,10 @@ export default function BattleDetailPage({ params }: { params: Promise<{ slug: s
         <div className="space-y-3 pt-2">
           {battle.comments && battle.comments.length > 0 ? (
             battle.comments.map((c) => (
-              <div key={c._id} className="bg-[#111827] border border-gray-800 p-4 rounded text-xs space-y-1">
+              <div
+                key={c._id}
+                className="bg-[#111827] border border-gray-800 p-4 rounded text-xs space-y-1"
+              >
                 <div className="flex justify-between text-gray-400 font-mono text-[10px]">
                   <span className="text-amber-500 font-bold">
                     Cmdr. {c.author?.username || 'ANONYMOUS'}
@@ -184,7 +175,9 @@ export default function BattleDetailPage({ params }: { params: Promise<{ slug: s
               </div>
             ))
           ) : (
-            <p className="text-xs font-mono text-gray-500 italic">No officer assessments filed yet.</p>
+            <p className="text-xs font-mono text-gray-500 italic">
+              No officer assessments filed yet.
+            </p>
           )}
         </div>
       </div>
