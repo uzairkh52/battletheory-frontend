@@ -1,73 +1,110 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import API from '@/lib/api';
-import { NewsItem } from '@/types';
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchNewsList } from '@/store/slices/newsSlice';
+import { Radio, ExternalLink, RefreshCw, ChevronRight } from 'lucide-react';
+
+// Title ko clean hyphenated slug mein convert karne ke liye helper function
+const slugify = (text: string) => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9 -]/g, '') // Non-alphanumeric chars remove karein
+    .replace(/\s+/g, '-')        // Spaces ko - se replace karein
+    .replace(/-+/g, '-');       // Multiple - ko single - karein
+};
 
 export default function NewsPage() {
-  const [newsList, setNewsList] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const dispatch = useAppDispatch();
+  const { items: newsList, loading, error } = useAppSelector((state) => state.news);
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const { data } = await API.get('/news');
-        setNewsList(data);
-      } catch (err) {
-        console.error('Failed to fetch defense news:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNews();
-  }, []);
+    dispatch(fetchNewsList());
+  }, [dispatch]);
 
   if (loading) {
-    return <div className="text-center py-20 text-amber-500 font-mono">MONITORING DEFENSE INTELLIGENCE FEEDS...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-amber-500 font-mono space-y-3">
+        <RefreshCw className="w-8 h-8 animate-spin text-amber-500" />
+        <p className="text-sm tracking-wider uppercase">MONITORING DEFENSE INTELLIGENCE FEEDS...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8 p-6 font-mono text-white">
+      {/* Header Banner */}
       <div className="border-b border-gray-800 pb-4">
-        <h1 className="text-3xl font-black uppercase text-amber-500 tracking-wider">
+        <h1 className="text-3xl font-black uppercase text-amber-500 tracking-wider flex items-center gap-3">
+          <Radio className="w-8 h-8 text-amber-500 animate-pulse" />
           AI & Modern Defense News
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-400 text-xs mt-1">
           Automated intelligence tracking autonomous systems, military AI integration, and next-gen defense tech.
         </p>
       </div>
 
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded text-xs">
+          {error}
+        </div>
+      )}
+
+      {/* News Feeds Container */}
       <div className="space-y-4">
         {newsList.length === 0 ? (
-          <p className="text-gray-500">No active defense intelligence alerts at this moment.</p>
+          <p className="text-gray-500 text-sm">No active defense intelligence alerts at this moment.</p>
         ) : (
-          newsList.map((item) => (
-            <div key={item._id} className="military-card p-5 flex flex-col md:flex-row justify-between md:items-center gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-xs font-mono">
-                  <span className="text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 uppercase">
-                    {item.category || 'DEFENSE TECH'}
-                  </span>
-                  <span className="text-gray-500">Source: <strong className="text-gray-300">{item.source}</strong></span>
-                </div>
-                <h2 className="text-lg font-bold text-white hover:text-amber-500 transition-colors">
-                  {item.title}
-                </h2>
-                <p className="text-sm text-gray-400 max-w-3xl">{item.summary}</p>
-              </div>
+          newsList.map((item) => {
+            const externalUrl = item.link || item.sourceUrl;
+            // Agar DB mein item.slug nahi hai toh title se clean slug generate karein
+            const targetSlug = item.slug || slugify(item.title) || item._id;
 
-              {item.url && (
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="amber-glow-btn text-xs font-bold whitespace-nowrap self-start md:self-center"
-                >
-                  Source Brief →
-                </a>
-              )}
-            </div>
-          ))
+            return (
+              <div
+                key={item._id}
+                className="bg-[#111827] border border-gray-800 hover:border-amber-500/40 p-5 rounded-lg flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all group"
+              >
+                <div className="space-y-2.5 flex-1">
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 uppercase font-bold text-[10px]">
+                      {item.category || 'MILITARY AI & DEFENSE'}
+                    </span>
+                    <span className="text-gray-500 text-[11px]">
+                      Source: <strong className="text-gray-300">{item.source || 'Defense News'}</strong>
+                    </span>
+                  </div>
+
+                  {/* Title mapped with Dynamic Hyphenated Slug Link */}
+                  <Link href={`/news/${targetSlug}`} className="inline-block">
+                    <h2 className="text-lg font-bold text-white group-hover:text-amber-500 transition-colors flex items-center gap-2">
+                      <span>{item.title}</span>
+                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-amber-500" />
+                    </h2>
+                  </Link>
+
+                  <p className="text-xs text-gray-400 max-w-3xl leading-relaxed">{item.summary}</p>
+                </div>
+
+                {/* External Original Source Link */}
+                {externalUrl && (
+                  <a
+                    href={externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded text-xs font-bold uppercase transition-colors whitespace-nowrap self-start md:self-center"
+                  >
+                    <span>Source Brief</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
     </div>

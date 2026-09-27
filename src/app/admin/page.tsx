@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import ArticleForm from './components/ArticleForm';
 import BattleForm from './components/BattleForm';
+import NewsForm from './components/news/NewsForm';
 
 export default function AdminOverviewPage() {
-  const [activeForm, setActiveForm] = useState<'article' | 'battle'>('article');
+  const [activeForm, setActiveForm] = useState<'article' | 'battle' | 'news'>('article');
 
   return (
     <div className="space-y-6">
@@ -30,10 +31,20 @@ export default function AdminOverviewPage() {
           >
             + NEW BATTLE
           </button>
+          <button
+            onClick={() => setActiveForm('news')}
+            className={`px-4 py-2 text-xs font-bold rounded transition-colors ${
+              activeForm === 'news' ? 'bg-amber-600 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            + NEW NEWS
+          </button>
         </div>
       </div>
 
-      {activeForm === 'article' ? <ArticleForm /> : <BattleForm />}
+      {activeForm === 'article' && <ArticleForm />}
+      {activeForm === 'battle' && <BattleForm />}
+      {activeForm === 'news' && <NewsForm />}
     </div>
   );
 }
