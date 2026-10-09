@@ -11,16 +11,19 @@ const slugify = (text: string) => {
   if (!text) return '';
   return text
     .toString()
+    .normalize('NFD')
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9 -]/g, '') // Non-alphanumeric chars remove karein
-    .replace(/\s+/g, '-')        // Spaces ko - se replace karein
-    .replace(/-+/g, '-');       // Multiple - ko single - karein
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
 };
 
 export default function NewsPage() {
   const dispatch = useAppDispatch();
-  const { items: newsList, loading, error } = useAppSelector((state) => state.news);
+  const { items: newsList, loading, error } = useAppSelector((state: any) => state.news);
 
   useEffect(() => {
     dispatch(fetchNewsList());
@@ -59,18 +62,35 @@ export default function NewsPage() {
         {newsList.length === 0 ? (
           <p className="text-gray-500 text-sm">No active defense intelligence alerts at this moment.</p>
         ) : (
-          newsList.map((item) => {
+          newsList.map((item: any) => {
             const externalUrl = item.link || item.sourceUrl;
-            // Agar DB mein item.slug nahi hai toh title se clean slug generate karein
-            const targetSlug = item.slug || slugify(item.title) || item._id;
+            const targetSlug = slugify(item.title) || item._id;
+            const imageUrl = item.imageUrl || item.image || item.thumbnail;
 
             return (
               <div
                 key={item._id}
-                className="bg-[#111827] border border-gray-800 hover:border-amber-500/40 p-5 rounded-lg flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all group"
+                className="bg-[#111827] border border-gray-800 hover:border-amber-500/40 p-4 sm:p-5 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-5 transition-all group"
               >
-                <div className="space-y-2.5 flex-1">
-                  <div className="flex items-center gap-3 text-xs">
+                {/* Left Side: Featured Image using standard img tag */}
+                <div className="w-full md:w-48 h-32 relative rounded overflow-hidden bg-gray-900 border border-gray-800 shrink-0">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={item.title || 'News thumbnail'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 bg-[#0b0f19]">
+                      <Radio className="w-6 h-6 mb-1 text-gray-700" />
+                      <span className="text-[9px] uppercase tracking-widest">NO VISUAL</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Middle: Title, Category & Summary */}
+                <div className="space-y-2.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-3 text-xs flex-wrap">
                     <span className="text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 uppercase font-bold text-[10px]">
                       {item.category || 'MILITARY AI & DEFENSE'}
                     </span>
@@ -81,22 +101,22 @@ export default function NewsPage() {
 
                   {/* Title mapped with Dynamic Hyphenated Slug Link */}
                   <Link href={`/news/${targetSlug}`} className="inline-block">
-                    <h2 className="text-lg font-bold text-white group-hover:text-amber-500 transition-colors flex items-center gap-2">
-                      <span>{item.title}</span>
-                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-amber-500" />
+                    <h2 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-500 transition-colors flex items-center gap-2">
+                      <span className="line-clamp-2">{item.title}</span>
+                      <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-amber-500 shrink-0" />
                     </h2>
                   </Link>
 
-                  <p className="text-xs text-gray-400 max-w-3xl leading-relaxed">{item.summary}</p>
+                  <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{item.summary}</p>
                 </div>
 
-                {/* External Original Source Link */}
+                {/* Right Side: External Source Link */}
                 {externalUrl && (
                   <a
                     href={externalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded text-xs font-bold uppercase transition-colors whitespace-nowrap self-start md:self-center"
+                    className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded text-xs font-bold uppercase transition-colors whitespace-nowrap self-stretch md:self-center"
                   >
                     <span>Source Brief</span>
                     <ExternalLink className="w-3.5 h-3.5" />

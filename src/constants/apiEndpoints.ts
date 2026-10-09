@@ -17,7 +17,7 @@ export const API_ENDPOINTS = {
   ARTICLES: {
     LIST: '/articles',
     DETAIL: (idOrSlug: string) => `/articles/${idOrSlug}`,
-    ADD_COMMENT: (slug: string) => `/articles/slug/${slug}/comments`,
+    ADD_COMMENT: (slug: string) => `/articles/${slug}/comments`,
     CREATE: '/articles',
     DELETE: (id: string | number) => `/articles/${id}`,
   },
@@ -28,6 +28,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/news/${id}`,
     DELETE: (id: string) => `/news/${id}`,
   },
+  // 🌟 Added Global Search Endpoint
+  SEARCH: '/search',
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;

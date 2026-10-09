@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
@@ -14,7 +14,14 @@ export default function RegisterPage() {
 
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading, error } = useSelector((state: RootState) => state.auth);
+
+  // Agar user pehle se logged in hai, toh register page se redirect kar do
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,12 +69,12 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-            placeholder="user@battletheory.com"
+            placeholder="vanguard@battletheory.com"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-mono text-gray-400 mb-1">SECURITY PASSWORD</label>
+          <label className="block text-xs font-mono text-gray-400 mb-1">PASSWORD</label>
           <input
             type="password"
             value={password}
@@ -81,18 +88,18 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full amber-glow-btn mt-2 font-black uppercase text-sm tracking-wider cursor-pointer disabled:opacity-50"
+          className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 rounded transition-colors text-sm uppercase tracking-wider"
         >
-          {loading ? 'REGISTERING...' : 'CREATE PROFILE'}
+          {loading ? 'Processing Clearance...' : 'Register Profile'}
         </button>
-      </form>
 
-      <p className="text-center text-xs text-gray-500">
-        Already have clearance?{' '}
-        <Link href="/login" className="text-amber-500 hover:underline font-bold">
-          Authenticate
-        </Link>
-      </p>
+        <div className="text-center text-xs text-gray-400 mt-4">
+          Already have clearance?{' '}
+          <Link href="/login" className="text-amber-500 hover:underline">
+            Login Here
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }

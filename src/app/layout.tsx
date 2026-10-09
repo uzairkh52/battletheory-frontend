@@ -19,7 +19,8 @@ export default function RootLayout({
       <body className="bg-[#0b0f19] text-gray-100 min-h-screen flex flex-col">
         <Providers>
           <Navbar />
-          <main className="flex-1 max-w-7xl w-full mx-auto p-6">
+          {/* Main se max-w-7xl aur p-6 hata diya hai taake sections apni marzi ki width le sakein */}
+          <main className="flex-1 w-full">
             {children}
           </main>
           <Footer />

@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, use } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   fetchBattleByIdOrSlug,
-  addBattleComment,
   clearBattleState,
 } from '@/store/slices/battleSlice';
+import CommentSection from '@/components/CommentSection'; // Apke path ke mutabiq adjust kar lein agar zaroorat ho
 
 export default function BattleDetailPage({
   params,
@@ -23,8 +23,6 @@ export default function BattleDetailPage({
     error,
   } = useAppSelector((state) => state.battles);
 
-  const [commentText, setCommentText] = useState('');
-
   useEffect(() => {
     dispatch(fetchBattleByIdOrSlug(slug));
 
@@ -32,16 +30,6 @@ export default function BattleDetailPage({
       dispatch(clearBattleState());
     };
   }, [dispatch, slug]);
-
-  const handlePostComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentText.trim() || !battle) return;
-
-    await dispatch(
-      addBattleComment({ battleId: battle._id, text: commentText })
-    );
-    setCommentText('');
-  };
 
   if (loading) {
     return (
@@ -84,7 +72,7 @@ export default function BattleDetailPage({
           )}
         </div>
 
-        <h1 className="text-3xl font-black text-white uppercase tracking-wider">
+        <h1 className="3xl font-black text-white uppercase tracking-wider text-3xl">
           {battleTitle} {battle.year ? `(${battle.year})` : ''}
         </h1>
 
@@ -134,52 +122,14 @@ export default function BattleDetailPage({
         </div>
       )}
 
-      {/* Officer Debriefs & Comments */}
-      <div className="pt-6 border-t border-gray-800 space-y-6">
-        <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">
-          OFFICER DEBRIEFS & STRATEGIC FEEDBACK
-        </h3>
-
-        <form onSubmit={handlePostComment} className="space-y-3">
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Submit battle commentary or tactical analysis..."
-            rows={3}
-            className="w-full bg-[#111827] border border-gray-800 rounded p-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 font-sans"
-          />
-          <button
-            type="submit"
-            disabled={submittingComment || !commentText.trim()}
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-black font-black text-xs uppercase tracking-widest rounded disabled:opacity-50 transition-colors"
-          >
-            {submittingComment ? 'FILING ASSESSMENT...' : 'POST ASSESSMENT'}
-          </button>
-        </form>
-
-        {/* Comment Roster */}
-        <div className="space-y-3 pt-2">
-          {battle.comments && battle.comments.length > 0 ? (
-            battle.comments.map((c) => (
-              <div
-                key={c._id}
-                className="bg-[#111827] border border-gray-800 p-4 rounded text-xs space-y-1"
-              >
-                <div className="flex justify-between text-gray-400 font-mono text-[10px]">
-                  <span className="text-amber-500 font-bold">
-                    Cmdr. {c.author?.username || 'ANONYMOUS'}
-                  </span>
-                  <span>{new Date(c.createdAt).toLocaleDateString()}</span>
-                </div>
-                <p className="text-gray-300 font-sans">{c.text || c.content}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-xs font-mono text-gray-500 italic">
-              No officer assessments filed yet.
-            </p>
-          )}
-        </div>
+      {/* Officer Debriefs & Comments Section (Using Reusable CommentSection Component) */}
+      <div className="pt-6 border-t border-gray-800">
+        <CommentSection 
+          battleId={battle._id} 
+          comments={battle.comments || []} 
+          submittingComment={submittingComment} 
+          type="battle" 
+        />
       </div>
     </div>
   );

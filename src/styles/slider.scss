@@ -1,0 +1,26 @@
+/* slider.scss */
+.swiper-button-next,
+.swiper-button-prev {
+  color: #d97706 !important;
+  transform: scale(0.45);
+}
+
+.swiper-horizontal {
+    padding-bottom: 50px;
+}
+.swiper-horizontal > .swiper-pagination-bullets.swiper-pagination-bullets-dynamic, 
+.swiper-pagination.swiper-pagination-horizontal {
+  bottom: 0px !important; // Thora oopar rakhein taake white card ke andar hi rahein
+}
+
+.swiper-pagination-bullet {
+  background: #9ca3af !important; // Inactive dots ka color (gray)
+}
+
+.swiper-pagination-bullet-active {
+  background-color: #d97706 !important; // Active dot ka color (amber)
+}
+.swiper-pagination-bullet {
+    width: 15px;
+    height:15px;
+}

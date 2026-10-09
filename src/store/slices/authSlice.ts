@@ -9,6 +9,9 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  users: User[];
+  usersLoading: boolean;
+  usersError: string | null;
 }
 
 // Safely retrieve user from localStorage on client-side
@@ -34,21 +37,23 @@ const initialState: AuthState = {
   isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('token') && !!initialUser : false,
   loading: false,
   error: null,
+  users: [],
+  usersLoading: false,
+  usersError: null,
 };
 
 // ----------------------------------------------------------------------
 // Async Thunks
 // ----------------------------------------------------------------------
 
-// Login User
-export const loginUser = createAsyncThunk(
-  'auth/loginUser',
-  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
+// Register User
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (credentials: { username: string; email: string; password: string }, { rejectWithValue }) => {
     try {
-      const res = await API.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+      const res = await API.post(API_ENDPOINTS.AUTH.REGISTER, credentials);
       const token = res.data.token;
 
-      // Extract user object handling backend format variations
       const userData: User = {
         _id: res.data._id || res.data.user?._id,
         username: res.data.username || res.data.user?.username,
@@ -63,109 +68,146 @@ export const loginUser = createAsyncThunk(
 
       return { user: userData, token };
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || 'Authentication failed');
+      return rejectWithValue(err.response?.data?.message || 'Registration failed');
     }
   }
 );
 
-// Register User
-export const registerUser = createAsyncThunk(
-  'auth/registerUser',
-  async (userData: { username: string; email: string; password: string }, { rejectWithValue }) => {
+// Login User
+export const loginUser = createAsyncThunk(
+  'auth/loginUser',
+  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const res = await API.post(API_ENDPOINTS.AUTH.REGISTER, userData);
+      const res = await API.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
       const token = res.data.token;
 
-      // Extract user payload handling backend response structures
-      const userPayload: User = res.data.user
-        ? res.data.user
-        : {
-            _id: res.data._id,
-            username: res.data.username,
-            email: res.data.email,
-            isAdmin: res.data.isAdmin || false,
-          };
+      const userData: User = {
+        _id: res.data._id || res.data.user?._id,
+        username: res.data.username || res.data.user?.username,
+        email: res.data.email || res.data.user?.email,
+        isAdmin: res.data.isAdmin || res.data.user?.isAdmin || false,
+      };
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userPayload));
+        localStorage.setItem('user', JSON.stringify(userData));
       }
 
-      return { user: userPayload, token };
+      return { user: userData, token };
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || 'Registration failed. Try again.');
+      return rejectWithValue(err.response?.data?.message || 'Login failed');
+    }
+  }
+);
+
+// Fetch All Users (Admin Panel)
+export const fetchAllUsers = createAsyncThunk(
+  'auth/fetchAllUsers',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await API.get('/auth/users', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch users');
+    }
+  }
+);
+
+// Toggle User Admin Role
+export const updateUserRole = createAsyncThunk(
+  'auth/updateUserRole',
+  async ({ userId, isAdmin }: { userId: string; isAdmin: boolean }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await API.put(
+        `/auth/users/${userId}/role`,
+        { isAdmin },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return res.data.user;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to update role');
     }
   }
 );
 
 // ----------------------------------------------------------------------
-// Auth Slice
+// Slice Definition
 // ----------------------------------------------------------------------
 
-const authSlice = createSlice({
+export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{ user: User; token: string }>
-    ) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.isAuthenticated = true;
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', action.payload.token);
-        localStorage.setItem('user', JSON.stringify(action.payload.user));
-      }
-    },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      state.error = null;
+      state.users = [];
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
     },
-    clearAuthError: (state) => {
-      state.error = null;
-    },
   },
   extraReducers: (builder) => {
     builder
-      // Login Handlers
-      .addCase(loginUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAuthenticated = true;
-      })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      // Register Handlers
+      // Register Cases
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
+        state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
-        state.isAuthenticated = true;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Login Cases
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Fetch All Users Cases
+      .addCase(fetchAllUsers.pending, (state) => {
+        state.usersLoading = true;
+        state.usersError = null;
+      })
+      .addCase(fetchAllUsers.fulfilled, (state, action) => {
+        state.usersLoading = false;
+        state.users = action.payload;
+      })
+      .addCase(fetchAllUsers.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.usersError = action.payload as string;
+      })
+      // Update User Role Case
+      .addCase(updateUserRole.fulfilled, (state, action) => {
+        const updatedUser = action.payload;
+        const index = state.users.findIndex((u) => u._id === updatedUser._id);
+        if (index !== -1) {
+          state.users[index].isAdmin = updatedUser.isAdmin;
+        }
       });
   },
 });
 
-export const { setCredentials, logout, clearAuthError } = authSlice.actions;
+export const { logout } = authSlice.actions;
 export default authSlice.reducer;

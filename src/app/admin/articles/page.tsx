@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link'; // 🌟 Added for routing to edit page
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   fetchAllArticles,
@@ -53,27 +54,55 @@ export default function ManageArticlesPage() {
             [ ERROR: {error} ]
           </p>
         </div>
+      ) : articles.length === 0 ? (
+        <div className="p-8 text-center border border-dashed border-gray-800 rounded font-mono text-xs text-gray-500">
+          [ NO ARTICLES FOUND ]
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 font-mono">
           {articles.map((item) => (
             <div
               key={item._id}
-              className="p-4 bg-[#111827] border border-gray-800 rounded flex justify-between items-center hover:border-gray-700 transition-colors"
+              className="p-4 bg-[#111827] border border-gray-800 rounded flex justify-between items-center hover:border-gray-700 transition-colors gap-4"
             >
-              <div>
-                <h4 className="text-sm font-bold text-white uppercase">
-                  {item.title}
-                </h4>
-                <p className="text-xs font-mono text-gray-500 line-clamp-1">
-                  {item.summary || item.content}
-                </p>
+              <div className="flex items-center space-x-4">
+                {/* 🌟 Featured Image Thumbnail Preview */}
+                {item.featuredImage ? (
+                  <img
+                    src={item.featuredImage}
+                    alt={item.title}
+                    className="w-12 h-12 object-cover rounded border border-gray-800 shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-black border border-gray-800 rounded flex items-center justify-center text-[10px] text-gray-600 shrink-0">
+                    NO IMG
+                  </div>
+                )}
+                <div>
+                  <h4 className="text-sm font-bold text-white uppercase">
+                    {item.title}
+                  </h4>
+                  <p className="text-xs text-gray-500 line-clamp-1">
+                    {item.summary || item.content}
+                  </p>
+                </div>
               </div>
-              <button
-                onClick={() => handleDelete(item._id)}
-                className="text-xs font-mono text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-3 py-1 rounded transition-colors"
-              >
-                DELETE
-              </button>
+
+              {/* Actions: Edit & Delete */}
+              <div className="flex items-center space-x-2 shrink-0">
+                <Link
+                  href={`/admin/articles/edit/${item._id}`}
+                  className="text-xs text-amber-400 hover:text-amber-300 bg-amber-950/30 hover:bg-amber-900/40 px-3 py-1.5 rounded transition-colors"
+                >
+                  EDIT
+                </Link>
+                <button
+                  onClick={() => handleDelete(item._id)}
+                  className="text-xs text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-3 py-1.5 rounded transition-colors"
+                >
+                  DELETE
+                </button>
+              </div>
             </div>
           ))}
         </div>

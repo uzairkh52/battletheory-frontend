@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
@@ -13,7 +13,14 @@ export default function LoginPage() {
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, loading, error } = useSelector((state: RootState) => state.auth);
+
+  // Agar user pehle se logged in hai, toh login page se redirect kar do
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,22 +75,16 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 text-black font-bold text-xs uppercase tracking-wider rounded transition-colors"
+          className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 rounded transition-colors text-sm uppercase tracking-wider"
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Authenticating...' : 'Login'}
         </button>
 
-        {/* Normal Register Navigation Link */}
-        <div className="pt-4 border-t border-gray-800/80 text-center">
-          <p className="text-xs text-gray-400 font-mono">
-            Don't have an account?{' '}
-            <Link
-              href="/register"
-              className="text-amber-500 font-bold hover:underline uppercase ml-1"
-            >
-              Register Here →
-            </Link>
-          </p>
+        <div className="text-center text-xs text-gray-400 mt-4">
+          Don't have an account?{' '}
+          <Link href="/register" className="text-amber-500 hover:underline">
+            Register Here
+          </Link>
         </div>
       </form>
     </div>

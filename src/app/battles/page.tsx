@@ -5,6 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAllBattles, Battle } from '@/store/slices/battleSlice';
+import BookmarkButton from '@/components/website/BookmarkButton';
 
 // SSR Bypass for Leaflet Map
 const BattleMap = dynamic(() => import('@/components/BattleMap'), {
@@ -106,23 +107,46 @@ export default function BattlesVisualizerPage() {
                   <div
                     key={b._id}
                     onClick={() => setSelectedBattle(b)}
-                    className={`p-4 rounded border cursor-pointer transition-all ${
+                    className={`p-3 rounded border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                       selectedBattle?._id === b._id
                         ? 'bg-amber-500/10 border-amber-500 text-white'
                         : 'bg-[#111827] border-gray-800 text-gray-400 hover:border-gray-700'
                     }`}
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <h4 className="font-bold text-sm text-white uppercase">
-                        {displayName}
-                      </h4>
-                      <span className="text-xs font-mono text-amber-500 font-bold">
-                        {b.year || 'N/A'}
-                      </span>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {/* Small Thumbnail on List item if available */}
+                      {b.featuredImage && (
+                        <img
+                          src={b.featuredImage}
+                          alt={displayName}
+                          className="w-10 h-10 object-cover rounded border border-gray-700 shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <h4 className="font-bold text-xs text-white uppercase truncate">
+                            {displayName}
+                          </h4>
+                        </div>
+                        <p className="text-[10px] font-mono text-amber-500 truncate">
+                          {b.year || 'N/A'} • {b.theater || 'CLASSIFIED'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs font-mono text-gray-500">
-                      {b.location || b.theater || 'CLASSIFIED LOCATION'}
-                    </p>
+
+                    {/* 🌟 Bookmark Button in List Item */}
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <BookmarkButton
+                        itemType="battle"
+                        itemId={b._id}
+                        title={displayName}
+                        slug={b.slug || b._id}
+                        thumbnail={b.featuredImage}
+                        theater={b.theater}
+                        year={b.year}
+                        summary={b.description || b.summary}
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -133,20 +157,45 @@ export default function BattlesVisualizerPage() {
               {selectedBattle ? (
                 <div className="space-y-6 flex-1 flex flex-col justify-between">
                   <div className="space-y-6">
-                    <div className="border-b border-gray-800 pb-4">
-                      <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded uppercase">
-                        THEATER: {selectedBattle.theater || 'EUROPEAN'}
-                      </span>
-                      <h2 className="text-2xl font-black text-white uppercase mt-2">
-                        {selectedBattle.title || selectedBattle.name}{' '}
-                        {selectedBattle.year ? `(${selectedBattle.year})` : ''}
-                      </h2>
-                      {selectedBattle.location && (
-                        <p className="text-xs font-mono text-amber-500 mt-1">
-                          📍 {selectedBattle.location}
-                        </p>
-                      )}
+                    <div className="border-b border-gray-800 pb-4 flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded uppercase">
+                          THEATER: {selectedBattle.theater || 'EUROPEAN'}
+                        </span>
+                        <h2 className="text-2xl font-black text-white uppercase mt-2">
+                          {selectedBattle.title || selectedBattle.name}{' '}
+                          {selectedBattle.year ? `(${selectedBattle.year})` : ''}
+                        </h2>
+                        {selectedBattle.location && (
+                          <p className="text-xs font-mono text-amber-500 mt-1">
+                            📍 {selectedBattle.location}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 🌟 Prominent Bookmark Button on Selected Panel Header */}
+                      <BookmarkButton
+                        itemType="battle"
+                        itemId={selectedBattle._id}
+                        title={selectedBattle.title || selectedBattle.name}
+                        slug={selectedBattle.slug || selectedBattle._id}
+                        thumbnail={selectedBattle.featuredImage}
+                        theater={selectedBattle.theater}
+                        year={selectedBattle.year}
+                        summary={selectedBattle.description || selectedBattle.summary}
+                      />
                     </div>
+
+                    {/* 🌟 Featured Image Display */}
+                    {selectedBattle.featuredImage && (
+                      <div className="w-full h-[240px] rounded-lg overflow-hidden border border-gray-800 bg-black/50 relative">
+                        <img
+                          src={selectedBattle.featuredImage}
+                          alt={selectedBattle.title || selectedBattle.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
 
                     {/* Tactical Description */}
                     <div>

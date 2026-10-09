@@ -6,7 +6,9 @@ export interface Comment {
   _id: string;
   text?: string;
   content?: string;
-  author?: { username: string };
+  author?: { _id: string; username: string };
+  parentComment?: string;
+  likes?: string[];
   createdAt: string;
 }
 
@@ -37,6 +39,7 @@ export interface Battle {
   phases?: TacticalPhase[];
   comments?: Comment[];
   category?: string;
+  featuredImage?: string; // 🌟 Added featuredImage field
 }
 
 export interface CreateBattlePayload {
@@ -49,6 +52,7 @@ export interface CreateBattlePayload {
   year: number;
   coordinates: [number, number];
   phases: { name: string; description: string }[];
+  featuredImage?: string; // 🌟 Added featuredImage payload field
 }
 
 interface BattleState {
@@ -77,7 +81,6 @@ const initialState: BattleState = {
 // Async Thunks
 // ----------------------------------------------------------------------
 
-// 1. Fetch All Battles
 export const fetchAllBattles = createAsyncThunk(
   'battles/fetchAll',
   async (_, { rejectWithValue }) => {
@@ -92,7 +95,6 @@ export const fetchAllBattles = createAsyncThunk(
   }
 );
 
-// 2. Fetch Categories (For Dropdown)
 export const fetchCategories = createAsyncThunk(
   'battles/fetchCategories',
   async (_, { rejectWithValue }) => {
@@ -107,7 +109,6 @@ export const fetchCategories = createAsyncThunk(
   }
 );
 
-// 3. Fetch Single Battle by ID or Slug
 export const fetchBattleByIdOrSlug = createAsyncThunk(
   'battles/fetchByIdOrSlug',
   async (idOrSlug: string, { rejectWithValue }) => {
@@ -123,7 +124,6 @@ export const fetchBattleByIdOrSlug = createAsyncThunk(
   }
 );
 
-// 4. Create Battle
 export const createBattle = createAsyncThunk(
   'battles/createBattle',
   async (payload: CreateBattlePayload, { rejectWithValue }) => {
@@ -138,7 +138,21 @@ export const createBattle = createAsyncThunk(
   }
 );
 
-// 5. Delete Battle
+// 🌟 Added updateBattle Async Thunk
+export const updateBattle = createAsyncThunk(
+  'battles/updateBattle',
+  async ({ id, battleData }: { id: string; battleData: Partial<CreateBattlePayload> }, { rejectWithValue }) => {
+    try {
+      const res = await API.put(`${API_ENDPOINTS.BATTLES.LIST}/${id}`, battleData);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || err.response?.data?.error || 'Failed to update battle.'
+      );
+    }
+  }
+);
+
 export const deleteBattle = createAsyncThunk(
   'battles/deleteBattle',
   async (id: string, { rejectWithValue }) => {
@@ -153,22 +167,57 @@ export const deleteBattle = createAsyncThunk(
   }
 );
 
-// 6. Add Comment to Battle
+// Add Comment or Reply
 export const addBattleComment = createAsyncThunk(
   'battles/addComment',
   async (
-    { battleId, text }: { battleId: string; text: string },
+    { battleId, text, parentComment }: { battleId: string; text: string; parentComment?: string | null },
     { rejectWithValue }
   ) => {
     try {
-      const res = await API.post(API_ENDPOINTS.BATTLES.ADD_COMMENT(battleId), { text });
+      const res = await API.post(`/battles/${battleId}/comments`, { text, parentComment });
       return res.data;
     } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.error ||
-          err.response?.data?.message ||
-          'Failed to post battle assessment.'
-      );
+      return rejectWithValue(err.response?.data?.message || 'Failed to post comment.');
+    }
+  }
+);
+
+// Toggle Like
+export const toggleLikeBattleComment = createAsyncThunk(
+  'battles/toggleLikeComment',
+  async (commentId: string, { rejectWithValue }) => {
+    try {
+      const res = await API.put(`/battles/comments/${commentId}/like`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to toggle like.');
+    }
+  }
+);
+
+// Edit Comment
+export const editBattleComment = createAsyncThunk(
+  'battles/editComment',
+  async ({ commentId, text }: { commentId: string; text: string }, { rejectWithValue }) => {
+    try {
+      const res = await API.put(`/battles/comments/${commentId}`, { text });
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to update comment.');
+    }
+  }
+);
+
+// Delete Comment
+export const deleteBattleComment = createAsyncThunk(
+  'battles/deleteComment',
+  async (commentId: string, { rejectWithValue }) => {
+    try {
+      await API.delete(`/battles/comments/${commentId}`);
+      return commentId;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to delete comment.');
     }
   }
 );
@@ -195,7 +244,6 @@ const battleSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch All Battles
       .addCase(fetchAllBattles.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -208,13 +256,9 @@ const battleSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
-      // Fetch Categories
       .addCase(fetchCategories.fulfilled, (state, action: PayloadAction<Category[]>) => {
         state.categories = action.payload;
       })
-
-      // Fetch Single Battle
       .addCase(fetchBattleByIdOrSlug.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -227,8 +271,6 @@ const battleSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
-      // Create Battle
       .addCase(createBattle.pending, (state) => {
         state.creating = true;
       })
@@ -240,8 +282,24 @@ const battleSlice = createSlice({
         state.creating = false;
         state.error = action.payload as string;
       })
-
-      // Delete Battle
+      // 🌟 Added Update Battle ExtraReducers
+      .addCase(updateBattle.pending, (state) => {
+        state.creating = true;
+      })
+      .addCase(updateBattle.fulfilled, (state, action: PayloadAction<Battle>) => {
+        state.creating = false;
+        const index = state.battles.findIndex((b) => b._id === action.payload._id);
+        if (index !== -1) {
+          state.battles[index] = action.payload;
+        }
+        if (state.currentBattle && state.currentBattle._id === action.payload._id) {
+          state.currentBattle = action.payload;
+        }
+      })
+      .addCase(updateBattle.rejected, (state, action) => {
+        state.creating = false;
+        state.error = action.payload as string;
+      })
       .addCase(deleteBattle.pending, (state) => {
         state.deleting = true;
       })
@@ -253,8 +311,7 @@ const battleSlice = createSlice({
         state.deleting = false;
         state.error = action.payload as string;
       })
-
-      // Add Battle Comment
+      // Add Comment
       .addCase(addBattleComment.pending, (state) => {
         state.submittingComment = true;
       })

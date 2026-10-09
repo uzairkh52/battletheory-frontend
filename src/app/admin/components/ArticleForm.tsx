@@ -2,21 +2,29 @@
 
 import { useState } from 'react';
 import API from '@/lib/api';
+import ArticleFormFields from '@/components/admin/ArticleFormFields';
 
 export default function ArticleForm() {
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [summary, setSummary] = useState('');
-  const [content, setContent] = useState('');
+  const [formData, setFormData] = useState({
+    title: '',
+    slug: '',
+    summary: '',
+    content: '',
+    featuredImage: '',
+  });
   const [status, setStatus] = useState({ type: '', msg: '' });
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus({ type: '', msg: '' });
     try {
-      await API.post('/articles', { title, slug, summary, content });
+      await API.post('/articles', formData);
       setStatus({ type: 'success', msg: 'Article published successfully!' });
-      setTitle(''); setSlug(''); setSummary(''); setContent('');
+      setFormData({ title: '', slug: '', summary: '', content: '', featuredImage: '' });
     } catch (err: any) {
       setStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to publish article.' });
     }
@@ -34,50 +42,7 @@ export default function ArticleForm() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-mono text-gray-400 mb-1">TITLE</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-mono text-gray-400 mb-1">SLUG</label>
-          <input
-            type="text"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            required
-            className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-xs font-mono text-gray-400 mb-1">SUMMARY</label>
-        <textarea
-          value={summary}
-          onChange={(e) => setSummary(e.target.value)}
-          required
-          rows={2}
-          className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-xs font-mono text-gray-400 mb-1">CONTENT</label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          required
-          rows={6}
-          className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-        />
-      </div>
+      <ArticleFormFields formData={formData} onChange={handleChange} showSlug={true} />
 
       <button type="submit" className="w-full py-3 bg-amber-600 hover:bg-amber-500 text-black font-bold text-xs uppercase tracking-wider rounded transition-colors">
         Deploy Article

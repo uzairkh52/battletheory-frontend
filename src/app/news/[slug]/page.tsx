@@ -1,17 +1,24 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchNewsBySlug } from '@/store/slices/newsSlice';
-import { ArrowLeft, ExternalLink, Shield, Calendar } from 'lucide-react';
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchNewsBySlug } from "@/store/slices/newsSlice";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Shield,
+  Calendar,
+} from "lucide-react";
 
 export default function NewsDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
   const dispatch = useAppDispatch();
-  const { selectedNews, loading, error } = useAppSelector((state) => state.news);
+  const { selectedNews, loading, error } = useAppSelector(
+    (state) => state.news,
+  );
 
   useEffect(() => {
     if (slug) {
@@ -31,7 +38,10 @@ export default function NewsDetailPage() {
     return (
       <div className="max-w-4xl mx-auto py-20 text-center font-mono text-red-500 space-y-4">
         <p className="text-sm">Intelligence briefing record not found.</p>
-        <Link href="/news" className="text-amber-500 hover:underline text-xs uppercase font-bold">
+        <Link
+          href="/news"
+          className="text-amber-500 hover:underline text-xs uppercase font-bold"
+        >
           ← Back to Defense Feeds
         </Link>
       </div>
@@ -39,7 +49,7 @@ export default function NewsDetailPage() {
   }
 
   return (
-    <article className="max-w-4xl mx-auto p-6 font-mono space-y-6 text-white">
+    <article className="max-w-4xl mx-auto p-6 font-mono space-y-6 text-white overflow-hidden">
       {/* Navigation */}
       <Link
         href="/news"
@@ -53,62 +63,65 @@ export default function NewsDetailPage() {
       <div className="space-y-4 border-b border-gray-800 pb-6">
         <div className="flex items-center gap-3 text-xs">
           <span className="text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 font-bold uppercase">
-            {selectedNews.category || 'MILITARY AI & DEFENSE'}
+            {selectedNews.category}
           </span>
           <span className="text-gray-400 flex items-center gap-1">
-            <Shield className="w-3.5 h-3.5 text-amber-500" />
-            Source: <strong className="text-gray-200">{selectedNews.source}</strong>
+            <Shield className="w-3.5 h-3.5 text-amber-500" /> Source: {selectedNews.source}
           </span>
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-black text-amber-500 uppercase tracking-wide leading-tight">
+        <h1 className="text-2xl md:text-3xl font-bold text-amber-500 leading-tight">
           {selectedNews.title}
         </h1>
 
-        {selectedNews.createdAt && (
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Calendar className="w-3.5 h-3.5 text-amber-500" />
-            <span>Logged: {new Date(selectedNews.createdAt).toLocaleDateString()}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-4 text-xs text-gray-400">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 text-amber-500" /> Logged: {new Date(selectedNews.createdAt).toLocaleDateString()}
+          </span>
+        </div>
       </div>
 
+      {/* Featured Image Banner */}
+      {selectedNews.image && (
+        <div className="w-full h-[280px] md:h-[350px] rounded-lg overflow-hidden bg-black flex items-center justify-center border border-amber-500/20 shadow-lg">
+          <img
+            src={selectedNews.image}
+            alt={selectedNews.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Executive Summary */}
-      <div className="bg-[#111827] border-l-4 border-amber-500 p-4 rounded-r space-y-1">
-        <span className="text-[10px] text-amber-500 uppercase tracking-widest font-bold block">
-          EXECUTIVE SUMMARY
-        </span>
-        <p className="text-xs text-gray-300 leading-relaxed font-semibold">
+      <div className="bg-amber-500/5 border-l-4 border-amber-500 p-4 rounded-r-lg space-y-2">
+        <div className="text-[10px] font-bold tracking-widest text-amber-500 uppercase">
+          Executive Summary
+        </div>
+        <p className="text-gray-300 text-xs md:text-sm leading-relaxed">
           {selectedNews.summary}
         </p>
       </div>
 
-      {/* Full Article Content */}
-      <div className="text-sm text-gray-300 leading-relaxed space-y-4 pt-2">
-        {selectedNews.content ? (
-          <p>{selectedNews.content}</p>
-        ) : (
-          <p className="italic text-gray-500 text-xs">
-            Full intelligence text aggregated directly from source stream. Refer to official release via external link below.
-          </p>
-        )}
-      </div>
+      {/* Article Content with inline images stripped out to prevent duplication */}
+      <div 
+        className="prose prose-invert max-w-none text-gray-300 text-sm leading-relaxed space-y-4"
+        dangerouslySetInnerHTML={{ 
+          __html: selectedNews.content ? selectedNews.content.replace(/<img[^>]*>/gi, '') : '' 
+        }}
+      />
 
-      {/* External Original Link */}
-      {(selectedNews.link || selectedNews.sourceUrl) && (
-        <div className="pt-6 border-t border-gray-800 flex justify-between items-center">
-          <span className="text-xs text-gray-500">Verified Wire Transmission</span>
-          <a
-            href={selectedNews.link || selectedNews.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded text-xs font-bold uppercase transition-colors"
-          >
-            <span>Open Original Source</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        </div>
-      )}
+      {/* External Source Link */}
+      <div className="pt-6 border-t border-gray-800 flex justify-end">
+        <a
+          href={selectedNews.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-xs font-bold text-amber-500 hover:underline uppercase"
+        >
+          <span>View Original Briefing</span>
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      </div>
     </article>
   );
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, use } from 'react';
 import Link from 'next/link';
-import { useAppDispatch, useAppSelector } from '@/store/hooks'; // Path apne project ke hisab se adjust karein
-import { fetchArticleBySlug, addCommentBySlug } from '@/store/slices/articleSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchArticleBySlug } from '@/store/slices/articleSlice';
+import CommentSection from '@/components/CommentSection';
 
 export default function ArticleDetailPage({
   params,
@@ -15,31 +16,14 @@ export default function ArticleDetailPage({
 
   const dispatch = useAppDispatch();
   const { article, loading, submittingComment, error } = useAppSelector(
-    (state) => state.article
+    (state) => state.articles
   );
-
-  const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
     if (slug) {
       dispatch(fetchArticleBySlug(slug));
     }
   }, [slug, dispatch]);
-
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !slug) return;
-
-    const result = await dispatch(
-      addCommentBySlug({ slug, text: newComment })
-    );
-
-    if (addCommentBySlug.fulfilled.match(result)) {
-      setNewComment('');
-    } else if (addCommentBySlug.rejected.match(result)) {
-      alert(result.payload || 'Failed to post comment.');
-    }
-  };
 
   if (loading) {
     return (
@@ -70,10 +54,13 @@ export default function ArticleDetailPage({
     );
   }
 
+  // 🌟 Article image check karne ke liye variable
+  const imageUrl = article.featuredImage || article.imageUrl || article.image;
+
   return (
-    <article className="max-w-4xl mx-auto my-8 space-y-8 px-4">
+    <article className="max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono">
       {/* Navigation Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs font-mono text-gray-500">
+      <div className="flex items-center gap-2 text-xs text-gray-500">
         <Link href="/articles" className="hover:text-amber-500 transition-colors">
           ARCHIVES
         </Link>
@@ -84,10 +71,10 @@ export default function ArticleDetailPage({
       {/* Header */}
       <header className="border-b border-gray-800 pb-6 space-y-4">
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded uppercase">
+          <span className="text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded uppercase">
             TACTICAL ANALYSIS
           </span>
-          <span className="text-xs font-mono text-gray-500">
+          <span className="text-xs text-gray-500">
             LOG DATE:{' '}
             {new Date(article.createdAt).toLocaleDateString('en-US', {
               year: 'numeric',
@@ -96,19 +83,28 @@ export default function ArticleDetailPage({
             })}
           </span>
         </div>
-
         <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight leading-tight">
           {article.title}
         </h1>
-
-        <p className="text-sm font-mono text-gray-400 border-l-2 border-amber-500 pl-4 py-1 italic bg-[#0b0f19]">
+        <p className="text-sm text-gray-400 border-l-2 border-amber-500 pl-4 py-1 italic bg-[#0b0f19]">
           "{article.summary}"
         </p>
       </header>
 
+      {/* 🌟 Featured Image Display Container */}
+      {imageUrl && (
+        <div className="w-full h-72 md:h-96 relative rounded-lg overflow-hidden border border-gray-800 bg-gray-900">
+          <img
+            src={imageUrl}
+            alt={article.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Main Body */}
       <div className="bg-[#111827] border border-gray-800 rounded-lg p-6 md:p-8 space-y-6">
-        <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2">
+        <h3 className="text-xs text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2">
           DECLASSIFIED BRIEFING BODY
         </h3>
         <div className="prose prose-invert max-w-none text-gray-300 text-sm md:text-base leading-relaxed whitespace-pre-line font-sans">
@@ -116,57 +112,13 @@ export default function ArticleDetailPage({
         </div>
       </div>
 
-      {/* Comments Section */}
-      <section className="bg-[#111827] border border-gray-800 rounded-lg p-6 space-y-6">
-        <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2">
-          TACTICAL DEBRIEFING & COMMENTS ({article.comments?.length || 0})
-        </h3>
-
-        {/* Comment Input Form */}
-        <form onSubmit={handleCommentSubmit} className="space-y-3">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Log tactical observation..."
-            rows={3}
-            required
-            className="w-full bg-[#0b0f19] border border-gray-800 rounded p-3 text-sm text-gray-200 focus:outline-none focus:border-amber-500"
-          />
-          <button
-            type="submit"
-            disabled={submittingComment}
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:bg-gray-700 text-black font-bold text-xs uppercase tracking-wider rounded transition-colors"
-          >
-            {submittingComment ? 'TRANSMITTING...' : 'POST DEBRIEFING'}
-          </button>
-        </form>
-
-        {/* Comments List */}
-        <div className="space-y-3 pt-4 border-t border-gray-800">
-          {article.comments && article.comments.length > 0 ? (
-            article.comments.map((c) => (
-              <div
-                key={c._id}
-                className="p-3 bg-[#0b0f19] border border-gray-800 rounded space-y-1"
-              >
-                <div className="flex justify-between items-center text-[10px] font-mono">
-                  <span className="text-amber-500 font-bold">
-                    {c.author?.username || 'GUEST OPERATIVE'}
-                  </span>
-                  <span className="text-gray-500">
-                    {new Date(c.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-300">{c.text}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-xs font-mono text-gray-500">
-              No field observations recorded yet.
-            </p>
-          )}
-        </div>
-      </section>
+      {/* Modular Comments Section Component */}
+      <CommentSection 
+        slug={article.slug} 
+        comments={article.comments || []} 
+        submittingComment={submittingComment} 
+        type="article" 
+      />
     </article>
   );
 }

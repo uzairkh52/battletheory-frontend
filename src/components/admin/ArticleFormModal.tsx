@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createArticle } from '@/store/slices/articleSlice';
+import ArticleFormFields from './ArticleFormFields';
 
 const generateSlug = (text: string) => {
   return text
@@ -26,10 +27,15 @@ export default function ArticleFormModal({ isOpen, onClose }: ArticleFormModalPr
     title: '',
     summary: '',
     content: '',
+    featuredImage: '',
     categoryId: '',
   });
 
   if (!isOpen) return null;
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,12 +52,13 @@ export default function ArticleFormModal({ isOpen, onClose }: ArticleFormModalPr
         slug,
         summary: formData.summary,
         content: formData.content,
+        featuredImage: formData.featuredImage,
         category: formData.categoryId,
       })
     );
 
     if (createArticle.fulfilled.match(resultAction)) {
-      setFormData({ title: '', summary: '', content: '', categoryId: '' });
+      setFormData({ title: '', summary: '', content: '', featuredImage: '', categoryId: '' });
       onClose();
     } else {
       alert((resultAction.payload as string) || 'Failed to save article');
@@ -65,72 +72,19 @@ export default function ArticleFormModal({ isOpen, onClose }: ArticleFormModalPr
           <h2 className="text-sm font-black text-amber-500 uppercase tracking-wider">
             Create New Article
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick5={onClose} onClick={onClose} className="text-gray-400 hover:text-white">
             ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 font-mono">
-          <div>
-            <label className="block text-[11px] uppercase text-gray-400 mb-1">
-              Title
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Article Headline"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] uppercase text-gray-400 mb-1">
-              Summary
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Short briefing summary..."
-              value={formData.summary}
-              onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-              className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[11px] uppercase text-gray-400 mb-1">
-              Category
-            </label>
-            <select
-              required
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
-            >
-              <option value="">-- SELECT CATEGORY --</option>
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-[11px] uppercase text-gray-400 mb-1">
-              Content
-            </label>
-            <textarea
-              rows={5}
-              required
-              placeholder="Detailed article body text..."
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <ArticleFormFields
+            formData={formData}
+            onChange={handleChange}
+            categories={categories}
+            showCategory={true}
+            showSlug={false}
+          />
 
           <div className="flex justify-end space-x-3 pt-3 border-t border-gray-800">
             <button

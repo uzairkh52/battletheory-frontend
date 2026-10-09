@@ -4,9 +4,12 @@ import { API_ENDPOINTS } from '@/constants/apiEndpoints';
 
 export interface Comment {
   _id: string;
-  author?: { username: string };
+  author?: { _id: string; username: string };
   text: string;
+  content?: string;
   createdAt: string;
+  likes?: string[];
+  parentComment?: string | null;
 }
 
 export interface Category {
@@ -59,7 +62,6 @@ const initialState: ArticleState = {
 // Async Thunks
 // ----------------------------------------------------------------------
 
-// 1. Fetch All Articles
 export const fetchAllArticles = createAsyncThunk(
   'article/fetchAll',
   async (_, { rejectWithValue }) => {
@@ -74,7 +76,6 @@ export const fetchAllArticles = createAsyncThunk(
   }
 );
 
-// 2. Fetch Categories (For Article Category Dropdown)
 export const fetchArticleCategories = createAsyncThunk(
   'article/fetchCategories',
   async (_, { rejectWithValue }) => {
@@ -89,7 +90,6 @@ export const fetchArticleCategories = createAsyncThunk(
   }
 );
 
-// 3. Fetch Single Article using Slug
 export const fetchArticleBySlug = createAsyncThunk(
   'article/fetchBySlug',
   async (slug: string, { rejectWithValue }) => {
@@ -105,7 +105,6 @@ export const fetchArticleBySlug = createAsyncThunk(
   }
 );
 
-// 4. Create Article
 export const createArticle = createAsyncThunk(
   'article/createArticle',
   async (payload: CreateArticlePayload, { rejectWithValue }) => {
@@ -120,7 +119,6 @@ export const createArticle = createAsyncThunk(
   }
 );
 
-// 5. Delete Article
 export const deleteArticle = createAsyncThunk(
   'article/deleteArticle',
   async (id: string, { rejectWithValue }) => {
@@ -135,7 +133,6 @@ export const deleteArticle = createAsyncThunk(
   }
 );
 
-// 6. Add Comment using Slug
 export const addCommentBySlug = createAsyncThunk(
   'article/addCommentBySlug',
   async (
@@ -144,7 +141,17 @@ export const addCommentBySlug = createAsyncThunk(
   ) => {
     try {
       const cleanSlug = decodeURIComponent(slug);
-      const res = await API.post(API_ENDPOINTS.ARTICLES.ADD_COMMENT(cleanSlug), { text });
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+      const res = await API.post(
+        API_ENDPOINTS.ARTICLES.ADD_COMMENT(cleanSlug), 
+        { text },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       return res.data;
     } catch (err: any) {
       return rejectWithValue(
@@ -152,6 +159,70 @@ export const addCommentBySlug = createAsyncThunk(
           err.response?.data?.message ||
           'Failed to post comment.'
       );
+    }
+  }
+);
+
+// Toggle Like on Comment
+export const toggleLikeComment = createAsyncThunk(
+  'article/toggleLikeComment',
+  async (commentId: string, { rejectWithValue }) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await API.post(`/articles/comments/${commentId}/like`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data; 
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to like comment.');
+    }
+  }
+);
+
+// Reply to Comment
+export const replyToComment = createAsyncThunk(
+  'article/replyToComment',
+  async ({ commentId, text }: { commentId: string; text: string }, { rejectWithValue }) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await API.post(`/articles/comments/${commentId}/reply`, { text }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data; 
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to reply.');
+    }
+  }
+);
+
+// Edit Comment Thunk
+export const editComment = createAsyncThunk(
+  'article/editComment',
+  async ({ commentId, text }: { commentId: string; text: string }, { rejectWithValue }) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await API.patch(`/articles/comments/${commentId}`, { text }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data; // updated comment object
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to edit comment.');
+    }
+  }
+);
+
+// Delete Comment Thunk
+export const deleteComment = createAsyncThunk(
+  'article/deleteComment',
+  async (commentId: string, { rejectWithValue }) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      await API.delete(`/articles/comments/${commentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return commentId; // deleted comment id
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to delete comment.');
     }
   }
 );
@@ -175,7 +246,6 @@ const articleSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch All Articles
       .addCase(fetchAllArticles.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -188,13 +258,9 @@ const articleSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
-      // Fetch Categories
       .addCase(fetchArticleCategories.fulfilled, (state, action: PayloadAction<Category[]>) => {
         state.categories = action.payload;
       })
-
-      // Fetch Single Article
       .addCase(fetchArticleBySlug.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -207,8 +273,6 @@ const articleSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-
-      // Create Article
       .addCase(createArticle.pending, (state) => {
         state.creating = true;
       })
@@ -220,8 +284,6 @@ const articleSlice = createSlice({
         state.creating = false;
         state.error = action.payload as string;
       })
-
-      // Delete Article
       .addCase(deleteArticle.pending, (state) => {
         state.deleting = true;
       })
@@ -233,8 +295,6 @@ const articleSlice = createSlice({
         state.deleting = false;
         state.error = action.payload as string;
       })
-
-      // Add Comment
       .addCase(addCommentBySlug.pending, (state) => {
         state.submittingComment = true;
       })
@@ -245,6 +305,46 @@ const articleSlice = createSlice({
       .addCase(addCommentBySlug.rejected, (state, action) => {
         state.submittingComment = false;
         state.error = action.payload as string;
+      })
+      // Update comment after like toggle
+      .addCase(toggleLikeComment.fulfilled, (state, action) => {
+        if (state.article && state.article.comments) {
+          const index = state.article.comments.findIndex(c => c._id === action.payload._id);
+          if (index !== -1) {
+            state.article.comments[index] = {
+              ...state.article.comments[index],
+              likes: action.payload.likes
+            };
+          }
+        }
+      })
+      // Push new reply into comments list
+      .addCase(replyToComment.fulfilled, (state, action) => {
+        if (state.article && state.article.comments) {
+          state.article.comments.unshift(action.payload);
+        }
+      })
+      // Edit comment in state
+      .addCase(editComment.fulfilled, (state, action) => {
+        if (state.article && state.article.comments) {
+          const index = state.article.comments.findIndex(c => c._id === action.payload._id);
+          if (index !== -1) {
+            state.article.comments[index] = {
+              ...state.article.comments[index],
+              text: action.payload.text,
+              content: action.payload.content
+            };
+          }
+        }
+      })
+      // Delete comment and its nested replies from state
+      .addCase(deleteComment.fulfilled, (state, action) => {
+        if (state.article && state.article.comments) {
+          const deletedId = action.payload;
+          state.article.comments = state.article.comments.filter(
+            c => c._id !== deletedId && c.parentComment !== deletedId
+          );
+        }
       });
   },
 });
