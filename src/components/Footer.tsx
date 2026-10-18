@@ -25,7 +25,7 @@ export default function Footer() {
         <div>
           <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Command & Legal</h4>
           <ul className="space-y-2 text-xs">
-            <li><Link href="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
+            <li><Link href="/privacy-policy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
             <li><Link href="/terms" className="hover:text-amber-500 transition-colors">Terms of Clearance</Link></li>
             <li><Link href="/contact" className="hover:text-amber-500 transition-colors">Dispatch / Contact</Link></li>
           </ul>

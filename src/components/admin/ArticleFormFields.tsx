@@ -1,4 +1,11 @@
+'use client';
+
 import React from 'react';
+import dynamic from 'next/dynamic';
+
+// Next.js SSR error avoid karne ke liye Dynamic Import
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
 
 interface ArticleFormFieldsProps {
   formData: {
@@ -14,7 +21,6 @@ interface ArticleFormFieldsProps {
 
 export default function ArticleFormFields({ formData, onChange, showSlug = true }: ArticleFormFieldsProps) {
   
-  // 🌟 Slug ko clean aur URL friendly banane ka function
   const slugify = (text: string) => {
     return text
       .toString()
@@ -25,11 +31,20 @@ export default function ArticleFormFields({ formData, onChange, showSlug = true 
       .replace(/\-\-+/g, '-');  // Multiple dashes ko single dash mein badal dega
   };
 
-  // Jab Title change ho, toh agar slug khali ho ya auto-generate karna ho toh optional hai, 
-  // lekin agar user khud Slug field mein paste karega toh neechay wala handler chalega.
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedSlug = slugify(e.target.value);
     onChange('slug', formattedSlug);
+  };
+
+  // Editor Toolbar Configuration (WordPress-style)
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['image', 'link'],
+      ['clean'],
+    ],
   };
 
   return (
@@ -43,9 +58,8 @@ export default function ArticleFormFields({ formData, onChange, showSlug = true 
           onChange={(e) => {
             const newTitle = e.target.value;
             onChange('title', newTitle);
-            // Agar aap chahte hain ke Title likhte hi slug khud ba khud generate ho jaye, 
-                // toh aap yeh line bhi uncomment kar sakte hain:
-            // onChange('slug', slugify(newTitle));
+            // 🌟 Title likhte hi Slug automatic generate aur update ho jayega
+            onChange('slug', slugify(newTitle));
           }}
           placeholder="Article Headline"
           className="w-full bg-[#0b0f19] border border-gray-800 rounded p-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
@@ -60,7 +74,7 @@ export default function ArticleFormFields({ formData, onChange, showSlug = true 
           <input
             type="text"
             value={formData.slug}
-            onChange={handleSlugChange} // 🌟 Yahan slugify apply ho gaya hai
+            onChange={handleSlugChange}
             placeholder="article-slug"
             className="w-full bg-[#0b0f19] border border-gray-800 rounded p-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
             required
@@ -92,17 +106,19 @@ export default function ArticleFormFields({ formData, onChange, showSlug = true 
         />
       </div>
 
-      {/* Content */}
+      {/* Content Field (Rich Text Editor WordPress Style) */}
       <div>
-        <label className="block text-xs text-gray-400 uppercase mb-1">Content</label>
-        <textarea
-          value={formData.content}
-          onChange={(e) => onChange('content', e.target.value)}
-          placeholder="Detailed article body text..."
-          rows={6}
-          className="w-full bg-[#0b0f19] border border-gray-800 rounded p-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
-          required
-        />
+        <label className="block text-xs text-gray-400 uppercase mb-1">Content (Rich Text Editor)</label>
+        <div className="bg-white text-black rounded overflow-hidden">
+          <ReactQuill
+            theme="snow"
+            value={formData.content}
+            onChange={(contentValue) => onChange('content', contentValue)}
+            modules={modules}
+            placeholder="Detailed article body text... Insert H1, Bold, Italic, and Images here."
+            className="min-h-[250px]"
+          />
+        </div>
       </div>
     </div>
   );

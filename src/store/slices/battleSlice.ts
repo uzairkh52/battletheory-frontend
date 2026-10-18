@@ -39,7 +39,7 @@ export interface Battle {
   phases?: TacticalPhase[];
   comments?: Comment[];
   category?: string;
-  featuredImage?: string; // 🌟 Added featuredImage field
+  featuredImage?: string;
 }
 
 export interface CreateBattlePayload {
@@ -52,7 +52,7 @@ export interface CreateBattlePayload {
   year: number;
   coordinates: [number, number];
   phases: { name: string; description: string }[];
-  featuredImage?: string; // 🌟 Added featuredImage payload field
+  featuredImage?: string;
 }
 
 interface BattleState {
@@ -61,6 +61,7 @@ interface BattleState {
   currentBattle: Battle | null;
   loading: boolean;
   creating: boolean;
+  updating: boolean; // 🌟 Added explicit updating state
   deleting: boolean;
   submittingComment: boolean;
   error: string | null;
@@ -72,6 +73,7 @@ const initialState: BattleState = {
   currentBattle: null,
   loading: false,
   creating: false,
+  updating: false,
   deleting: false,
   submittingComment: false,
   error: null,
@@ -138,7 +140,6 @@ export const createBattle = createAsyncThunk(
   }
 );
 
-// 🌟 Added updateBattle Async Thunk
 export const updateBattle = createAsyncThunk(
   'battles/updateBattle',
   async ({ id, battleData }: { id: string; battleData: Partial<CreateBattlePayload> }, { rejectWithValue }) => {
@@ -167,7 +168,6 @@ export const deleteBattle = createAsyncThunk(
   }
 );
 
-// Add Comment or Reply
 export const addBattleComment = createAsyncThunk(
   'battles/addComment',
   async (
@@ -183,7 +183,6 @@ export const addBattleComment = createAsyncThunk(
   }
 );
 
-// Toggle Like
 export const toggleLikeBattleComment = createAsyncThunk(
   'battles/toggleLikeComment',
   async (commentId: string, { rejectWithValue }) => {
@@ -196,7 +195,6 @@ export const toggleLikeBattleComment = createAsyncThunk(
   }
 );
 
-// Edit Comment
 export const editBattleComment = createAsyncThunk(
   'battles/editComment',
   async ({ commentId, text }: { commentId: string; text: string }, { rejectWithValue }) => {
@@ -209,7 +207,6 @@ export const editBattleComment = createAsyncThunk(
   }
 );
 
-// Delete Comment
 export const deleteBattleComment = createAsyncThunk(
   'battles/deleteComment',
   async (commentId: string, { rejectWithValue }) => {
@@ -237,6 +234,7 @@ const battleSlice = createSlice({
       state.currentBattle = null;
       state.loading = false;
       state.creating = false;
+      state.updating = false;
       state.deleting = false;
       state.submittingComment = false;
       state.error = null;
@@ -244,6 +242,7 @@ const battleSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Fetch All Battles
       .addCase(fetchAllBattles.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -256,9 +255,13 @@ const battleSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+
+      // Fetch Categories
       .addCase(fetchCategories.fulfilled, (state, action: PayloadAction<Category[]>) => {
         state.categories = action.payload;
       })
+
+      // Fetch Battle By ID or Slug
       .addCase(fetchBattleByIdOrSlug.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -271,8 +274,11 @@ const battleSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+
+      // Create Battle
       .addCase(createBattle.pending, (state) => {
         state.creating = true;
+        state.error = null;
       })
       .addCase(createBattle.fulfilled, (state, action: PayloadAction<Battle>) => {
         state.creating = false;
@@ -282,12 +288,14 @@ const battleSlice = createSlice({
         state.creating = false;
         state.error = action.payload as string;
       })
-      // 🌟 Added Update Battle ExtraReducers
+
+      // Update Battle
       .addCase(updateBattle.pending, (state) => {
-        state.creating = true;
+        state.updating = true;
+        state.error = null;
       })
       .addCase(updateBattle.fulfilled, (state, action: PayloadAction<Battle>) => {
-        state.creating = false;
+        state.updating = false;
         const index = state.battles.findIndex((b) => b._id === action.payload._id);
         if (index !== -1) {
           state.battles[index] = action.payload;
@@ -297,9 +305,11 @@ const battleSlice = createSlice({
         }
       })
       .addCase(updateBattle.rejected, (state, action) => {
-        state.creating = false;
+        state.updating = false;
         state.error = action.payload as string;
       })
+
+      // Delete Battle
       .addCase(deleteBattle.pending, (state) => {
         state.deleting = true;
       })
@@ -311,6 +321,7 @@ const battleSlice = createSlice({
         state.deleting = false;
         state.error = action.payload as string;
       })
+
       // Add Comment
       .addCase(addBattleComment.pending, (state) => {
         state.submittingComment = true;

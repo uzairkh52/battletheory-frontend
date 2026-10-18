@@ -28,8 +28,9 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/news/${id}`,
     DELETE: (id: string) => `/news/${id}`,
   },
-  // 🌟 Added Global Search Endpoint
   SEARCH: '/search',
+  // 🌟 Added Contact Endpoint
+  CONTACT: '/contact',
 } as const;
 
 export type ApiEndpoints = typeof API_ENDPOINTS;

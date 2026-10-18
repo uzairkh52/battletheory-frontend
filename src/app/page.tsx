@@ -23,9 +23,22 @@ export default function Home() {
   const dispatch = useAppDispatch();
 
   // Redux States
-  const { articles, loading: loadingArticles } = useAppSelector((state) => state.articles);
-  const { items: defenseNewsItems, loading: loadingNews } = useAppSelector((state) => state.news);
-  const { battles, loading: loadingBattles } = useAppSelector((state) => state.battles);
+  const { articles = [], loading: loadingArticles } = useAppSelector((state: any) => state.articles);
+  const newsState = useAppSelector((state: any) => state.news);
+  const { battles = [], loading: loadingBattles } = useAppSelector((state: any) => state.battles);
+
+  // Auto-detect news array structure from API response
+  const defenseNewsItems = Array.isArray(newsState?.news?.news)
+    ? newsState.news.news
+    : Array.isArray(newsState?.items?.news)
+    ? newsState.items.news
+    : Array.isArray(newsState?.news)
+    ? newsState.news
+    : Array.isArray(newsState?.items)
+    ? newsState.items
+    : [];
+
+  const loadingNews = newsState?.loading || false;
 
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -112,7 +125,7 @@ export default function Home() {
         </section>
       </div>
 
-      {/* 2. Latest Battle Engagements Container (Dynamic via battleSlice) */}
+      {/* 2. Latest Battle Engagements Container (Swiper Slider Version) */}
       <div className="max-w-6xl mx-auto px-4">
         <section className="space-y-6">
           <div className="flex justify-between items-center border-b border-gray-800 pb-2">
@@ -127,60 +140,72 @@ export default function Home() {
           {loadingBattles ? (
             <p className="text-xs text-amber-500 animate-pulse">[ SCANNING BATTLE ARCHIVES... ]</p>
           ) : battles.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {battles.slice(0, 3).map((b) => {
+            <Swiper
+              modules={[Autoplay, Navigation, Pagination]}
+              spaceBetween={24}
+              slidesPerView={1}
+              loop={battles.length > 3}
+              autoplay={{ delay: 4000, disableOnInteraction: false }}
+              pagination={{ clickable: true }}
+              navigation={true}
+              breakpoints={{
+                640: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 },
+              }}
+              className="battles-slider pb-12 pt-2"
+            >
+              {battles.map((b: any) => {
                 const battleLink = `/battles/${b.slug || b._id}`;
                 const thumbnail = (b.featuredImage && typeof b.featuredImage === 'string' && b.featuredImage.trim() !== '') 
                   ? b.featuredImage 
                   : 'https://images.unsplash.com/photo-1579965101323-8832a84a6b57?w=600&auto=format&fit=crop&q=60';
                 
                 return (
-                  <div
-                    key={b._id}
-                    className="bg-[#111827] border border-gray-800 rounded-lg overflow-hidden flex flex-col justify-between hover:border-amber-500/50 transition-all"
-                  >
-                    <Link href={battleLink} className="w-full h-40 overflow-hidden bg-black/40 border-b border-gray-800 block">
-                      <img
-                        src={thumbnail}
-                        alt={b.title || b.name || 'Battle Archive'}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      />
-                    </Link>
-                    <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-[10px]">
-                          <span className="text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded uppercase">
-                            {b.theater || 'EUROPEAN'}
-                          </span>
-                          <span className="text-gray-400 font-bold">{b.year || 'N/A'}</span>
-                        </div>
-                        <h3 className="text-base font-black text-white uppercase truncate">
-                          <Link href={battleLink} className="hover:text-amber-500 transition-colors">
-                            {b.title || b.name}
-                          </Link>
-                        </h3>
-                        <p className="text-xs text-gray-400 line-clamp-2 font-sans">
-                          {b.description || b.summary || 'Tactical overview of engagement parameters...'}
-                        </p>
-                      </div>
-                      <Link
-                        href={battleLink}
-                        className="inline-block text-xs font-bold text-amber-500 hover:underline pt-2 border-t border-gray-800/60"
-                      >
-                        Access Briefing File →
+                  <SwiperSlide key={b._id || b.slug}>
+                    <div className="bg-[#111827] border border-gray-800 rounded-lg overflow-hidden flex flex-col justify-between hover:border-amber-500/50 transition-all h-full">
+                      <Link href={battleLink} className="w-full h-40 overflow-hidden bg-black/40 border-b border-gray-800 block">
+                        <img
+                          src={thumbnail}
+                          alt={b.title || b.name || 'Battle Archive'}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
                       </Link>
+                      <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-[10px]">
+                            <span className="text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded uppercase">
+                              {b.theater || 'EUROPEAN'}
+                            </span>
+                            <span className="text-gray-400 font-bold">{b.year || 'N/A'}</span>
+                          </div>
+                          <h3 className="text-base font-black text-white uppercase truncate">
+                            <Link href={battleLink} className="hover:text-amber-500 transition-colors">
+                              {b.title || b.name}
+                            </Link>
+                          </h3>
+                          <p className="text-xs text-gray-400 line-clamp-2 font-sans">
+                            {b.description || b.summary || 'Tactical overview of engagement parameters...'}
+                          </p>
+                        </div>
+                        <Link
+                          href={battleLink}
+                          className="inline-block text-xs font-bold text-amber-500 hover:underline pt-2 border-t border-gray-800/60"
+                        >
+                          Access Briefing File →
+                        </Link>
+                      </div>
                     </div>
-                  </div>
+                  </SwiperSlide>
                 );
               })}
-            </div>
+            </Swiper>
           ) : (
             <p className="text-xs text-gray-500">No battle records found in archives.</p>
           )}
         </section>
       </div>
 
-      {/* 3. Defense Intelligence & News Wire (Dynamic via newsSlice) */}
+      {/* 3. Defense Intelligence & News Wire */}
       <div className="max-w-6xl mx-auto px-4">
         <section className="space-y-6 bg-[#111827]/70 border border-gray-800 p-6 md:p-8 rounded-xl shadow-xl">
           <div className="flex justify-between items-center border-b border-gray-800 pb-2">
@@ -196,11 +221,11 @@ export default function Home() {
             <p className="text-xs text-amber-500 animate-pulse">[ RECEIVING DEFENSE WIRE FEEDS... ]</p>
           ) : defenseNewsItems.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {defenseNewsItems.slice(0, 4).map((news) => {
+              {defenseNewsItems.slice(0, 4).map((news: any) => {
                 const newsLink = `/news/${news.slug || news._id}`;
                 return (
                   <div 
-                    key={news._id || news.slug} 
+                    key={news._id || news.slug || Math.random()} 
                     className="bg-black/50 border border-gray-800/80 p-5 rounded-lg hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-3"
                   >
                     <div className="space-y-2">
@@ -214,7 +239,7 @@ export default function Home() {
                         <Link href={newsLink}>{news.title}</Link>
                       </h3>
                       <p className="text-xs text-gray-400 font-sans leading-relaxed line-clamp-2">
-                        {news.summary}
+                        {news.summary || news.description}
                       </p>
                     </div>
                     <div className="pt-2 border-t border-gray-900 flex justify-end">
@@ -227,12 +252,12 @@ export default function Home() {
               })}
             </div>
           ) : (
-            <p className="text-xs text-gray-500">No defense news dispatches available.</p>
+            <p className="text-xs text-gray-500">[ NO DEFENSE NEWS DISPATCHES AVAILABLE ]</p>
           )}
         </section>
       </div>
 
-      {/* 4. Classified Field Reports & Articles (Dynamic via articleSlice) */}
+      {/* 4. Classified Field Reports & Articles (Swiper Slider Version) */}
       <section className="w-full bg-white text-gray-900 py-12 px-6 md:px-16 shadow-2xl my-8">
         <div className="max-w-6xl mx-auto space-y-6">
           <div className="flex justify-between items-center border-b border-gray-300 pb-2">
@@ -251,27 +276,27 @@ export default function Home() {
               modules={[Autoplay, Navigation, Pagination]}
               spaceBetween={24}
               slidesPerView={1}
-              loop={true}
-              autoplay={{ delay: 5000, disableOnInteraction: false }}
+              loop={articles.length > 2}
+              autoplay={{ delay: 4500, disableOnInteraction: false }}
               pagination={{ clickable: true }}
               navigation={true}
               breakpoints={{
                 768: { slidesPerView: 2 },
               }}
-              className="articles-slider pb-12 pt-2 px-6"
+              className="articles-slider pb-12 pt-2 px-2"
             >
-              {articles.map((article) => {
-                const articleLink = `/articles/${article.slug}`;
-                const image = (article as any).image || (article as any).featuredImage || 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600&auto=format&fit=crop&q=60';
+              {articles.map((article: any) => {
+                const articleLink = `/articles/${article.slug || article._id}`;
+                const image = article.image || article.featuredImage || 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600&auto=format&fit=crop&q=60';
                 
                 const categoryName = typeof article.category === 'object' && article.category !== null 
-                  ? (article.category as any).name 
+                  ? article.category.name 
                   : article.category || 'WWII / DOCTRINE';
 
                 return (
                   <SwiperSlide key={article._id || article.slug}>
                     <div className="flex flex-col sm:flex-row gap-4 items-start bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all h-full">
-                      <Link href={articleLink} className="w-full sm:w-36 h-28 shrink-0 block overflow-hidden rounded">
+                      <Link href={articleLink} className="w-full sm:w-36 h-28 shrink-0 block overflow-hidden rounded bg-gray-200">
                         <img
                           src={image}
                           alt={article.title}
@@ -279,16 +304,16 @@ export default function Home() {
                         />
                       </Link>
                       <div className="space-y-2 flex-1">
-                        <span className="text-[9px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded uppercase font-bold">
+                        <span className="text-[9px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded uppercase font-bold inline-block">
                           {categoryName}
                         </span>
-                        <h3 className="text-base font-black text-gray-900 uppercase">
+                        <h3 className="text-base font-black text-gray-900 uppercase line-clamp-1">
                           <Link href={articleLink} className="hover:text-amber-700 transition-colors">
                             {article.title}
                           </Link>
                         </h3>
-                        <p className="text-xs text-gray-700 font-sans line-clamp-2">
-                          {article.summary}
+                        <p className="text-xs text-gray-700 font-sans line-clamp-2 leading-relaxed">
+                          {article.summary || article.description || 'Tactical research dossier analysis...'}
                         </p>
                         <Link href={articleLink} className="inline-block text-[11px] font-bold text-amber-700 hover:underline pt-1">
                           Read Analysis →
