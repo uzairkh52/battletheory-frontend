@@ -1,106 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createBattle, updateBattle } from '@/store/slices/battleSlice';
 import BattleFormFields from './battle/BattleFormFields';
 import API from '@/lib/api';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-const tacticalMarkerIcon = L.divIcon({
-  className: 'custom-tactical-pin',
-  html: `
-  <div style="
-    width: 18px;
-    height: 18px;
-    background: #f59e0b;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    box-shadow: 0 0 12px #f59e0b, 0 0 20px #f59e0b;
-    cursor: pointer;
-    transform: translate(-50%, -50%);
-  "></div>
-  `,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
-
-function MapClickListener({ onSelect }: { onSelect: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e) {
-      onSelect(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
-}
-
-function MapResizeFixer({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      map.invalidateSize();
-      map.setView(center, map.getZoom());
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [map, center]);
-  return null;
-}
-
-function TacticalMapPicker({
-  latitude,
-  longitude,
-  onSelect,
-}: {
-  latitude: number;
-  longitude: number;
-  onSelect: (lat: number, lng: number) => void;
-}) {
-  const centerPosition: [number, number] = [latitude, longitude];
-  return (
-    <div className="w-full h-[280px] rounded border border-gray-800 overflow-hidden relative z-0">
-      <MapContainer
-        center={centerPosition}
-        zoom={3}
-        scrollWheelZoom={true}
-        className="w-full h-full bg-[#0b0f19]"
-      >
-        <MapResizeFixer center={centerPosition} />
-        <MapClickListener onSelect={onSelect} />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          subdomains={['a', 'b', 'c', 'd']}
-          maxZoom={19}
-        />
-        <Marker position={centerPosition} icon={tacticalMarkerIcon}>
-          <Popup>
-            <div className="text-black font-mono text-xs">
-              <strong>TARGET COORDINATES</strong>
-              <br />
-              Lat: {latitude.toFixed(4)}
-              <br />
-              Lng: {longitude.toFixed(4)}
-            </div>
-          </Popup>
-        </Marker>
-      </MapContainer>
-    </div>
-  );
-}
-
-const DynamicTacticalMapPicker = dynamic(() => Promise.resolve(TacticalMapPicker), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[280px] bg-[#0b0f19] border border-gray-800 rounded flex items-center justify-center">
-      <p className="text-xs font-mono text-amber-500 animate-pulse">
-        [ INITIALIZING GEOSPATIAL RADAR & DARK MAP TILES... ]
-      </p>
-    </div>
-  ),
-});
 
 interface PhaseInput {
   name: string;
@@ -261,14 +165,6 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
     }
   };
 
-  const handleSelectCoordinatesFromMap = (lat: number, lng: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      latitude: Number(lat.toFixed(6)),
-      longitude: Number(lng.toFixed(6)),
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.categoryId) {
@@ -326,6 +222,7 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* BattleFormFields already includes the Tactical Map Picker component */}
           <BattleFormFields
             formData={formData}
             categories={availableCategories}
@@ -341,56 +238,6 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
             onRemovePhase={handleRemovePhase}
             onPhaseChange={handlePhaseChange}
           />
-
-          <div className="space-y-2 bg-black/40 p-3 border border-gray-800/80 rounded font-mono">
-            <div className="flex justify-between items-center mb-1">
-              <label className="block text-amber-500 text-[10px] uppercase font-bold tracking-wider">
-                📍 TACTICAL MAP PICKER (CLICK MAP TO SELECT COORDINATES)
-              </label>
-              <span className="text-[10px] text-amber-500/80 font-mono">
-                Lat: {formData.latitude}, Lng: {formData.longitude}
-              </span>
-            </div>
-            <DynamicTacticalMapPicker
-              latitude={formData.latitude}
-              longitude={formData.longitude}
-              onSelect={handleSelectCoordinatesFromMap}
-            />
-            <div className="grid grid-cols-2 gap-4 pt-1">
-              <div>
-                <label className="block text-amber-500/80 text-[10px] mb-1 uppercase">
-                  Map Latitude
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  required
-                  placeholder="Latitude"
-                  value={formData.latitude}
-                  onChange={(e) =>
-                    setFormData({ ...formData, latitude: parseFloat(e.target.value) || 0 })
-                  }
-                  className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-amber-500/80 text-[10px] mb-1 uppercase">
-                  Map Longitude
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  required
-                  placeholder="Longitude"
-                  value={formData.longitude}
-                  onChange={(e) =>
-                    setFormData({ ...formData, longitude: parseFloat(e.target.value) || 0 })
-                  }
-                  className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
-                />
-              </div>
-            </div>
-          </div>
 
           <div className="flex justify-end space-x-3 pt-3 border-t border-gray-800 font-mono text-xs">
             <button

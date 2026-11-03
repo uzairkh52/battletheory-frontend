@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Newspaper, Swords, Radio, ArrowLeft } from 'lucide-react';
 
-export default function Sidebar() {
+interface SidebarProps {
+  onItemClick?: () => void;
+}
+
+export default function Sidebar({ onItemClick }: SidebarProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -15,9 +19,9 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-[#111827] border-r border-gray-800 p-6 space-y-6 flex flex-col justify-between min-h-[75vh] font-mono">
+    <aside className="w-full h-full bg-[#111827] border-r border-gray-800 p-6 space-y-6 flex flex-col justify-between font-mono">
       <div className="space-y-6">
-        <div className="space-y-1">
+        <div className="space-y-1 hidden lg:block">
           <span className="text-[10px] text-amber-500 uppercase tracking-widest block">
             COMMAND CENTER
           </span>
@@ -32,6 +36,7 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 href={item.path}
+                onClick={onItemClick}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded transition-all ${
                   isActive
                     ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30'
@@ -49,6 +54,7 @@ export default function Sidebar() {
       <div className="pt-4 border-t border-gray-800">
         <Link
           href="/"
+          onClick={onItemClick}
           className="text-xs text-gray-500 hover:text-amber-500 transition-colors flex items-center gap-2 font-bold uppercase tracking-wider"
         >
           <ArrowLeft className="w-3.5 h-3.5 text-amber-500" />

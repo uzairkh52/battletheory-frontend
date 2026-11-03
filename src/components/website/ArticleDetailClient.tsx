@@ -1,4 +1,5 @@
 'use client';
+import styles from "@/styles/component/article/ArticleDetail.module.scss";
 
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -18,7 +19,6 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
     }
   }, [slug, dispatch]);
 
-  // ⚡ Instant Browser Tab Title Update
   useEffect(() => {
     if (article?.title) {
       document.title = `${article.title} | Battle Theory`;
@@ -57,7 +57,7 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
   const imageUrl = article.featuredImage || article.imageUrl || article.image;
 
   return (
-    <article className="max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono">
+    <article className={`${styles.articleContainer} max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono`}>
       {/* Navigation Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-gray-500">
         <Link href="/articles" className="hover:text-amber-500 transition-colors">
@@ -99,6 +99,22 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
             &ldquo;{article.summary}&rdquo;
           </p>
         )}
+
+        {/* 🌟 Clickable Tags Section */}
+        {article.tags && article.tags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className="text-[10px] text-gray-500 uppercase font-bold">TAGS:</span>
+            {article.tags.map((tag: string, idx: number) => (
+              <Link
+                key={idx}
+                href={`/articles/tag/${encodeURIComponent(tag)}`}
+                className="bg-amber-500/10 border border-amber-500/20 hover:border-amber-500 text-amber-400 text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono transition-colors"
+              >
+                #{tag}
+              </Link>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* Featured Image Display Container */}
@@ -123,6 +139,19 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
           dangerouslySetInnerHTML={{ __html: article.content }} 
         />
       </div>
+
+      {/* Facebook Video Embed Render Section */}
+      {article.videoEmbed && (
+        <div className="bg-[#111827] border border-gray-800 rounded-lg p-6 md:p-8 space-y-4 overflow-hidden">
+          <h3 className="text-xs text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2 font-bold">
+            TACTICAL VIDEO FOOTAGE
+          </h3>
+          <div 
+            className="w-full flex justify-center [&>iframe]:w-full [&>iframe]:max-w-2xl [&>iframe]:aspect-video [&>iframe]:rounded-lg"
+            dangerouslySetInnerHTML={{ __html: article.videoEmbed }} 
+          />
+        </div>
+      )}
 
       {/* Modular Comments Section Component */}
       <CommentSection 

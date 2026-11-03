@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ArticleDetailClient from '@/components/website/ArticleDetailClient';
+import styles from "@/styles/component/article/ArticleDetail.module.scss"; // SCSS Module import
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -50,5 +51,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArticleDetailPage({ params }: Props) {
   const { slug } = await params;
-  return <ArticleDetailClient slug={slug} />;
+
+  return (
+    <div className={styles.articleContainer}>
+      <ArticleDetailClient slug={slug} />
+    </div>
+  );
 }

@@ -1,6 +1,12 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
+import { DynamicTacticalMapPicker } from './TacticalMapPicker';
+
+// Next.js SSR error avoid karne ke liye Dynamic Import
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
 
 interface PhaseInput {
   name: string;
@@ -61,6 +67,22 @@ export default function BattleFormFields({
       .replace(/\s+/g, '-')
       .replace(/[^\w\-]+/g, '')
       .replace(/\-\-+/g, '-');
+  };
+
+  const handleSelectCoordinatesFromMap = (lat: number, lng: number) => {
+    onChange('latitude', Number(lat.toFixed(6)));
+    onChange('longitude', Number(lng.toFixed(6)));
+  };
+
+  // Editor Toolbar Configuration (WordPress-style)
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['image', 'link'],
+      ['clean'],
+    ],
   };
 
   return (
@@ -174,7 +196,6 @@ export default function BattleFormFields({
                 })}
               </select>
 
-              {/* Delete Button for Selected Category */}
               {formData.categoryId && (
                 <button
                   type="button"
@@ -224,17 +245,70 @@ export default function BattleFormFields({
         />
       </div>
 
-      {/* Description */}
+      {/* 🌟 Description / Detailed Article Body (ReactQuill Rich Text Editor) */}
       <div>
-        <label className="block text-gray-400 mb-1 uppercase">Description</label>
-        <textarea
-          rows={3}
-          required
-          placeholder="Detailed engagement history..."
-          value={formData.description || ''}
-          onChange={(e) => onChange('description', e.target.value)}
-          className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
+        <label className="block text-gray-400 mb-1 uppercase">
+          Description / Battle History (Rich Text Editor)
+        </label>
+        <div className="bg-white text-black rounded overflow-hidden">
+          <ReactQuill
+            theme="snow"
+            value={formData.description || ''}
+            onChange={(contentValue) => onChange('description', contentValue)}
+            modules={modules}
+            placeholder="Detailed engagement history... Add headings, formatted text, Facebook video links & Amazon links."
+            className="min-h-[200px]"
+          />
+        </div>
+      </div>
+
+      {/* 📍 Interactive Map Picker Section */}
+      <div className="space-y-2 bg-black/40 p-3 border border-gray-800 rounded font-mono">
+        <div className="flex justify-between items-center mb-1">
+          <label className="block text-amber-500 text-[10px] uppercase font-bold tracking-wider">
+            📍 TACTICAL MAP PICKER (CLICK MAP TO SELECT COORDINATES)
+          </label>
+          <span className="text-[10px] text-amber-500/80 font-mono">
+            Lat: {formData.latitude}, Lng: {formData.longitude}
+          </span>
+        </div>
+
+        <DynamicTacticalMapPicker
+          latitude={formData.latitude || 28.2072}
+          longitude={formData.longitude || -177.3735}
+          onSelect={handleSelectCoordinatesFromMap}
         />
+
+        <div className="grid grid-cols-2 gap-4 pt-1">
+          <div>
+            <label className="block text-amber-500/80 text-[10px] mb-1 uppercase">
+              Map Latitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              required
+              placeholder="Latitude"
+              value={formData.latitude ?? ''}
+              onChange={(e) => onChange('latitude', parseFloat(e.target.value) || 0)}
+              className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
+            />
+          </div>
+          <div>
+            <label className="block text-amber-500/80 text-[10px] mb-1 uppercase">
+              Map Longitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              required
+              placeholder="Longitude"
+              value={formData.longitude ?? ''}
+              onChange={(e) => onChange('longitude', parseFloat(e.target.value) || 0)}
+              className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Tactical Phases Section */}

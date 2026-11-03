@@ -6,6 +6,8 @@ export const API_ENDPOINTS = {
   },
   CATEGORIES: {
     LIST: '/categories',
+    ARTICLES: '/categories/articles', // 🌟 Sirf Articles ki categories ke liye
+    BATTLES: '/categories/battles',   // 🌟 Sirf Battles ki categories ke liye
   },
   BATTLES: {
     LIST: '/battles',

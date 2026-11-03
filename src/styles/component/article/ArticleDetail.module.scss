@@ -1,0 +1,17 @@
+.articleContainer {
+  /* Rich text content ke andar ke sabhi tags par inline styles ko ignore karna */
+  :global(.prose) {
+    *, 
+    *::before, 
+    *::after {
+      color: inherit !important;
+      background-color: transparent !important;
+    }
+
+    /* Agar kuch specific tags par background color reh jaye */
+    p, span, strong, em, b, i, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote {
+      color: inherit !important;
+      background-color: transparent !important;
+    }
+  }
+}

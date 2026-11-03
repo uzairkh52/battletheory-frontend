@@ -61,7 +61,7 @@ interface BattleState {
   currentBattle: Battle | null;
   loading: boolean;
   creating: boolean;
-  updating: boolean; // 🌟 Added explicit updating state
+  updating: boolean;
   deleting: boolean;
   submittingComment: boolean;
   error: string | null;
@@ -97,15 +97,16 @@ export const fetchAllBattles = createAsyncThunk(
   }
 );
 
+// 🌟 Updated to fetch ONLY Battle Categories
 export const fetchCategories = createAsyncThunk(
   'battles/fetchCategories',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await API.get(API_ENDPOINTS.CATEGORIES.LIST);
+      const res = await API.get(API_ENDPOINTS.CATEGORIES.BATTLES);
       return res.data;
     } catch (err: any) {
       return rejectWithValue(
-        err.response?.data?.message || 'Failed to load categories.'
+        err.response?.data?.message || 'Failed to load battle categories.'
       );
     }
   }

@@ -64,9 +64,11 @@ const initialState: ArticleState = {
 
 export const fetchAllArticles = createAsyncThunk(
   'article/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (tag: string | undefined, { rejectWithValue }) => {
     try {
-      const res = await API.get(API_ENDPOINTS.ARTICLES.LIST);
+      // Agar tag pass ho ga toh query bany gi, warna saare articles aayenge
+      const endpoint = tag ? `/articles?tag=${encodeURIComponent(tag)}` : API_ENDPOINTS.ARTICLES.LIST;
+      const res = await API.get(endpoint);
       return res.data;
     } catch (err: any) {
       return rejectWithValue(
@@ -75,6 +77,7 @@ export const fetchAllArticles = createAsyncThunk(
     }
   }
 );
+
 
 export const fetchArticleCategories = createAsyncThunk(
   'article/fetchCategories',

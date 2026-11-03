@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import API from '@/lib/api';
 import BattleFormFields from '@/components/admin/battle/BattleFormFields';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchArticleCategories } from '@/store/slices/articleSlice';
+import { fetchCategories } from '@/store/slices/battleSlice'; // 🌟 Battle slice se import karein
 
 export default function BattleForm() {
   const dispatch = useAppDispatch();
-  const { categories } = useAppSelector((state) => state.articles);
+  const { categories } = useAppSelector((state) => state.battles); // 🌟 state.battles use karein
 
   const [formData, setFormData] = useState({
     title: '',
@@ -31,7 +31,7 @@ export default function BattleForm() {
   const [showAddCat, setShowAddCat] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchArticleCategories());
+    dispatch(fetchCategories()); // 🌟 Battle categories fetch honge jo ab /categories/battles call karega
   }, [dispatch]);
 
   const handleFieldChange = (field: string, value: any) => {
@@ -62,12 +62,13 @@ export default function BattleForm() {
       .replace(/\-\-+/g, '-');
 
     try {
-      const res = await API.post('/categories', { name: newCatName, slug });
-      await dispatch(fetchArticleCategories());
+      // 🌟 Category create karte waqt type: 'battle' lazmi bhejiye
+      const res = await API.post('/categories', { name: newCatName, slug, type: 'battle' });
+      await dispatch(fetchCategories());
       setFormData((prev) => ({ ...prev, theater: res.data.name || newCatName }));
       setNewCatName('');
       setShowAddCat(false);
-      setStatus({ type: 'success', msg: 'Category added successfully!' });
+      setStatus({ type: 'success', msg: 'Battle category added successfully!' });
     } catch (err: any) {
       setStatus({
         type: 'error',
@@ -81,7 +82,7 @@ export default function BattleForm() {
 
     try {
       await API.delete(`/categories/${catId}`);
-      await dispatch(fetchArticleCategories());
+      await dispatch(fetchCategories());
       setFormData((prev) => ({ ...prev, theater: '' }));
       setStatus({ type: 'success', msg: 'Category deleted successfully!' });
     } catch (err: any) {
@@ -165,7 +166,7 @@ export default function BattleForm() {
         setNewCatName={setNewCatName}
         setShowAddCat={setShowAddCat}
         onAddCategory={handleAddCategory}
-        onDeleteCategory={handleDeleteCategory} // 🌟 Yeh prop yahan miss ho gaya tha, ab add kar diya hai!
+        onDeleteCategory={handleDeleteCategory}
         onChange={(field, val) => {
           if (field === 'categoryId') {
             handleFieldChange('theater', val);

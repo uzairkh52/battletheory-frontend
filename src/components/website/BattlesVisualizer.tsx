@@ -45,7 +45,7 @@ export default function BattlesVisualizer() {
         );
 
   return (
-    <div className="space-y-6 my-6 max-w-6xl mx-auto px-4">
+    <div className="space-y-6 my-6 max-w-6xl mx-auto px-4 overflow-hidden">
       {/* Header & Filters */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-800 pb-4">
         <div>
@@ -153,21 +153,21 @@ export default function BattlesVisualizer() {
             </div>
 
             {/* Tactical Visualizer Panel */}
-            <div className="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-lg p-6 flex flex-col justify-between min-h-[450px]">
+            <div className="lg:col-span-2 bg-[#111827] border border-gray-800 rounded-lg p-6 flex flex-col justify-between min-h-[450px] overflow-hidden">
               {selectedBattle ? (
-                <div className="space-y-6 flex-1 flex flex-col justify-between">
-                  <div className="space-y-6">
-                    <div className="border-b border-gray-800 pb-4 flex justify-between items-start">
-                      <div>
+                <div className="space-y-6 flex-1 flex flex-col justify-between overflow-hidden">
+                  <div className="space-y-6 overflow-hidden">
+                    <div className="border-b border-gray-800 pb-4 flex justify-between items-start gap-4">
+                      <div className="min-w-0 flex-1">
                         <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded uppercase">
                           THEATER: {selectedBattle.theater || 'EUROPEAN'}
                         </span>
-                        <h2 className="text-2xl font-black text-white uppercase mt-2">
+                        <h2 className="text-2xl font-black text-white uppercase mt-2 break-words">
                           {selectedBattle.title || selectedBattle.name}{' '}
                           {selectedBattle.year ? `(${selectedBattle.year})` : ''}
                         </h2>
                         {selectedBattle.location && (
-                          <p className="text-xs font-mono text-amber-500 mt-1">
+                          <p className="text-xs font-mono text-amber-500 mt-1 break-words">
                             📍 {selectedBattle.location}
                           </p>
                         )}
@@ -197,16 +197,23 @@ export default function BattlesVisualizer() {
                       </div>
                     )}
 
-                    {/* Tactical Description */}
-                    <div>
+                    {/* 🌟 TACTICAL BRIEFING OVERVIEW (DANGEROUSLY SET HTML + SPACING + COLOR & OVERFLOW FIX) */}
+                    <div className="overflow-hidden">
                       <h4 className="text-xs font-mono text-gray-400 uppercase tracking-widest mb-2">
                         BRIEFING & OVERVIEW
                       </h4>
-                      <p className="text-sm text-gray-300 leading-relaxed font-sans">
-                        {selectedBattle.description ||
-                          selectedBattle.summary ||
-                          'No detailed briefing provided.'}
-                      </p>
+                      <div
+                        className="text-gray-200 leading-relaxed font-sans text-sm break-all break-words [word-break:break-word] 
+                                   [&_*]:!text-gray-200 [&_p]:!text-gray-200 [&_span]:!text-gray-200
+                                   [&_p]:mb-4 [&_br]:block [&_br]:content-[''] [&_br]:my-2
+                                   [&_a]:!text-amber-500 [&_a]:underline [&_a]:font-bold [&_a]:my-2 [&_a]:inline-block"
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            selectedBattle.description ||
+                            selectedBattle.summary ||
+                            'No detailed briefing provided.',
+                        }}
+                      />
                     </div>
 
                     {/* Tactical Phases / Timeline */}
@@ -220,16 +227,16 @@ export default function BattlesVisualizer() {
                             {selectedBattle.tacticalPhases.map((phase, idx) => (
                               <div
                                 key={idx}
-                                className="p-3 bg-[#0b0f19] border border-gray-800 rounded flex gap-3 items-start"
+                                className="p-3 bg-[#0b0f19] border border-gray-800 rounded flex gap-3 items-start break-words overflow-hidden"
                               >
-                                <span className="text-xs font-mono text-amber-500 font-bold">
+                                <span className="text-xs font-mono text-amber-500 font-bold shrink-0">
                                   0{idx + 1}.
                                 </span>
-                                <div>
-                                  <h5 className="text-xs font-bold text-white uppercase">
+                                <div className="min-w-0 flex-1">
+                                  <h5 className="text-xs font-bold text-white uppercase break-words">
                                     {phase.phaseName}
                                   </h5>
-                                  <p className="text-xs text-gray-400 mt-0.5">
+                                  <p className="text-xs text-gray-400 mt-0.5 break-words">
                                     {phase.details}
                                   </p>
                                 </div>

@@ -56,10 +56,15 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
   }
 
   const battleTitle = battle.title || battle.name || 'CLASSIFIED ENGAGEMENT';
-  const battleOverview =
+  
+  // 🌟 EXACT DATABASE FIELD MAPPINGS
+  const battleSummary = battle.summary || '';
+  
+  // MongoDB uses 'content' for the detailed breakdown
+  const battleDescription =
+    (battle as any).content ||
     battle.description ||
-    battle.summary ||
-    'No briefing details logged for this record.';
+    'No detailed engagement history logged for this record.';
 
   return (
     <div className="max-w-4xl mx-auto my-8 px-4 space-y-8 font-mono text-white">
@@ -105,18 +110,37 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* Briefing / Overview Section */}
-      <div className="space-y-3">
-        <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">
-          TACTICAL BRIEFING & OVERVIEW
-        </h3>
-        <div className="bg-[#111827] border border-gray-800 p-6 rounded-lg">
-          <p className="text-gray-300 leading-relaxed font-sans text-sm whitespace-pre-line">
-            {battleOverview}
-          </p>
+      {/* 🌟 EXACT SUMMARY FROM DATABASE */}
+      {battleSummary && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold flex items-center gap-2">
+            <span>⚡</span> EXECUTIVE SUMMARY // BRIEFING
+          </h3>
+          <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg">
+            <p className="text-amber-200 font-sans text-sm leading-relaxed italic">
+              "{battleSummary}"
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
+      {/* Detailed Content / Description Section */}
+      {/* Detailed Content / Description Section */}
+{/* Detailed Content / Description Section */}
+<div className="space-y-3">
+  <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">
+    TACTICAL ENGAGEMENT OVERVIEW
+  </h3>
+  <div className="bg-[#111827] border border-gray-800 p-6 rounded-lg overflow-hidden">
+    <div
+      className="text-gray-200 leading-relaxed font-sans text-sm break-all break-words [word-break:break-word] 
+                 [&_*]:!text-gray-200 [&_p]:!text-gray-200 [&_span]:!text-gray-200
+                 [&_p]:mb-4 [&_br]:block [&_br]:content-[''] [&_br]:my-2
+                 [&_a]:!text-amber-500 [&_a]:underline [&_a]:font-bold [&_a]:my-2 [&_a]:inline-block"
+      dangerouslySetInnerHTML={{ __html: battleDescription }}
+    />
+  </div>
+</div>
       {/* Tactical Phases */}
       {battle.tacticalPhases && battle.tacticalPhases.length > 0 && (
         <div className="space-y-4">
@@ -134,9 +158,11 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
                 </span>
                 <div>
                   <h4 className="text-sm font-bold text-white uppercase">
-                    {phase.phaseName}
+                    {phase.phaseName || phase.name}
                   </h4>
-                  <p className="text-xs text-gray-400 mt-1 font-sans leading-relaxed">{phase.details}</p>
+                  <p className="text-xs text-gray-400 mt-1 font-sans leading-relaxed">
+                    {phase.details || phase.description}
+                  </p>
                 </div>
               </div>
             ))}

@@ -17,16 +17,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (res.ok) {
       const battle = await res.json();
       const title = battle.title || battle.name || 'Classified Battle Engagement';
-      const description =
+      
+      // 🌟 SEO Meta description uses summary first
+      const metaDescription =
+        battle.summary ||
         battle.description?.slice(0, 160) ||
         `Declassified military battle archives for ${title}.`;
 
       return {
         title: `${title} (${battle.year || 'Historical'}) | Battle Theory`,
-        description,
+        description: metaDescription,
         openGraph: {
           title: `${title} | Battle Theory`,
-          description,
+          description: metaDescription,
           images: battle.featuredImage ? [battle.featuredImage] : [],
         },
       };

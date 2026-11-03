@@ -7,22 +7,27 @@ import { fetchAllArticles } from '@/store/slices/articleSlice';
 import BookmarkButton from '@/components/website/BookmarkButton';
 import { Shield, ChevronRight } from 'lucide-react';
 
-export default function ArticlesListClient() {
+interface ArticlesListClientProps {
+  filterTag?: string; // 🌟 Tag prop catch karne ke liye
+}
+
+export default function ArticlesListClient({ filterTag }: ArticlesListClientProps) {
   const dispatch = useAppDispatch();
   const { articles = [], loading, error } = useAppSelector((state) => state.articles);
 
   useEffect(() => {
-    dispatch(fetchAllArticles());
-  }, [dispatch]);
+    // 🌟 Redux thunk ko filterTag pass kar diya
+    dispatch(fetchAllArticles(filterTag));
+  }, [dispatch, filterTag]);
 
   return (
     <div className="max-w-6xl mx-auto my-8 px-4 space-y-6 font-mono text-white">
       <div className="border-b border-gray-800 pb-4">
         <span className="text-[10px] text-amber-500 uppercase tracking-widest block">
-          DECLASSIFIED INTELLIGENCE
+          {filterTag ? `INTELLIGENCE ARCHIVE // TAG: #${filterTag}` : 'DECLASSIFIED INTELLIGENCE'}
         </span>
         <h1 className="text-3xl font-black uppercase tracking-wider text-white">
-          Tactical Articles Archive
+          {filterTag ? `Tagged Dossiers: #${filterTag}` : 'Tactical Articles Archive'}
         </h1>
       </div>
 
@@ -35,10 +40,16 @@ export default function ArticlesListClient() {
           {error}
         </div>
       ) : articles.length === 0 ? (
-        <div className="p-8 text-center border border-dashed border-gray-800 rounded">
+        <div className="p-8 text-center border border-dashed border-gray-800 rounded space-y-4">
           <p className="text-xs text-gray-500 uppercase">
-            No intelligence articles found in database.
+            No intelligence articles found {filterTag ? `for tag #${filterTag}` : 'in database'}.
           </p>
+          <Link
+            href="/articles"
+            className="inline-block px-4 py-2 bg-amber-600 text-black text-xs font-bold uppercase rounded hover:bg-amber-500 transition-colors"
+          >
+            Return to All Dossiers
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
@@ -86,7 +97,7 @@ export default function ArticlesListClient() {
                   </p>
                 </div>
 
-                {/* Right Side: Actions (Read Briefing + Bookmark Button) */}
+                {/* Right Side: Actions */}
                 <div className="flex items-center gap-2 self-stretch md:self-center">
                   <Link
                     href={`/articles/${art.slug}`}
