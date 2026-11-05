@@ -25,6 +25,8 @@ export default function EditArticleForm({ articleId }: EditArticleFormProps) {
 
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false); // 🌟 Form Submit Loading State
+  const [addingCategory, setAddingCategory] = useState(false); // 🌟 Add Category Loading State
   const [status, setStatus] = useState({ type: '', msg: '' });
   
   // Category management states for Edit Form
@@ -58,11 +60,9 @@ export default function EditArticleForm({ articleId }: EditArticleFormProps) {
           content: art.content || '',
           featuredImage: art.featuredImage || '',
           videoEmbed: art.videoEmbed || '',
-          // Handle both populated category object or string ID
           category: art.category?._id || art.category || '',
         });
 
-        // Set existing tags if available
         if (art.tags && Array.isArray(art.tags)) {
           setTags(art.tags);
         }
@@ -87,7 +87,8 @@ export default function EditArticleForm({ articleId }: EditArticleFormProps) {
   };
 
   const handleAddCategory = async () => {
-    if (!newCatName.trim()) return;
+    if (!newCatName.trim() || addingCategory) return;
+    setAddingCategory(true);
     try {
       const slug = newCatName.toLowerCase().trim().replace(/\s+/g, '-');
       const res = await API.post('/categories', { 
@@ -105,6 +106,8 @@ export default function EditArticleForm({ articleId }: EditArticleFormProps) {
       setShowAddCat(false);
     } catch (err: any) {
       alert(err.response?.data?.error || err.response?.data?.message || 'Failed to add article category');
+    } finally {
+      setAddingCategory(false);
     }
   };
 
@@ -127,6 +130,8 @@ export default function EditArticleForm({ articleId }: EditArticleFormProps) {
     }
 
     setStatus({ type: '', msg: '' });
+    setSubmitting(true); // 🌟 Start Button Loading
+
     try {
       const payload = {
         ...formData,
@@ -140,6 +145,7 @@ export default function EditArticleForm({ articleId }: EditArticleFormProps) {
       }, 1000);
     } catch (err: any) {
       setStatus({ type: 'error', msg: err.response?.data?.message || 'Failed to update article.' });
+      setSubmitting(false); // 🌟 Stop Button Loading on Error
     }
   };
 
@@ -172,10 +178,26 @@ export default function EditArticleForm({ articleId }: EditArticleFormProps) {
         onDeleteCategory={handleDeleteCategory}
         onChange={handleChange}
         showSlug={true} 
+        addingCategory={addingCategory}
       />
 
-      <button type="submit" className="w-full py-3 bg-amber-600 hover:bg-amber-500 text-black font-bold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer">
-        Update Intel Record
+      {/* 🌟 Submit Button with Circular Spinner */}
+      <button 
+        type="submit" 
+        disabled={submitting}
+        className="w-full py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 disabled:cursor-not-allowed text-black font-bold text-xs uppercase tracking-wider rounded transition-colors cursor-pointer flex items-center justify-center gap-2"
+      >
+        {submitting ? (
+          <>
+            <svg className="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Updating Intel Record...</span>
+          </>
+        ) : (
+          <span>Update Intel Record</span>
+        )}
       </button>
     </form>
   );

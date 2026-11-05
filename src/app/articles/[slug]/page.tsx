@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import ArticleDetailClient from '@/components/website/ArticleDetailClient';
-import styles from "@/styles/component/article/ArticleDetail.module.scss"; // SCSS Module import
+import styles from "@/styles/component/article/ArticleDetail.module.scss";
 
 type Props = {
   params: Promise<{ slug: string }>;

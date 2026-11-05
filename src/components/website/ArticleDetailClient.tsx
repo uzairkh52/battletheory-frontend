@@ -1,17 +1,24 @@
 'use client';
-import styles from "@/styles/component/article/ArticleDetail.module.scss";
 
-import { useEffect } from 'react';
+import styles from "@/styles/component/article/ArticleDetail.module.scss";
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchArticleBySlug } from '@/store/slices/articleSlice';
 import CommentSection from '@/components/CommentSection';
+import { Edit3, ShieldAlert } from 'lucide-react';
 
 export default function ArticleDetailClient({ slug }: { slug: string }) {
   const dispatch = useAppDispatch();
   const { article, loading, submittingComment, error } = useAppSelector(
     (state) => state.articles
   );
+
+  // 🌟 FIX: Updated to match your authSlice schema (isAdmin boolean check)
+  const { user } = useAppSelector((state) => state.auth);
+  const isAdmin = Boolean(user?.isAdmin || user?.role === 'admin');
+
+  const [showAllTags, setShowAllTags] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -55,16 +62,48 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
   }
 
   const imageUrl = article.featuredImage || article.imageUrl || article.image;
+  const articleId = article._id || article.id;
 
   return (
-    <article className={`${styles.articleContainer} max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono`}>
+    <article className={`${styles.articleContainer} max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono relative`}>
+      
+      {/* 🌟 WordPress Style Admin Quick Edit Bar (Visible when user.isAdmin is true) */}
+      {isAdmin && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between shadow-lg backdrop-blur-sm sticky top-4 z-40">
+          <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase">
+            <ShieldAlert className="w-4 h-4 animate-pulse" />
+            <span>[ COMMANDER CLEARANCE: QUICK EDIT ACTIVE ]</span>
+          </div>
+          {articleId && (
+            <Link
+              href={`/admin/articles/edit/${articleId}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase rounded transition-colors"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Article</span>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Navigation Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-gray-500">
-        <Link href="/articles" className="hover:text-amber-500 transition-colors">
-          DOSSIERS
-        </Link>
-        <span>/</span>
-        <span className="text-amber-500 uppercase">{article.slug}</span>
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center gap-2">
+          <Link href="/articles" className="hover:text-amber-500 transition-colors">
+            DOSSIERS
+          </Link>
+          <span>/</span>
+          <span className="text-amber-500 uppercase">{article.slug}</span>
+        </div>
+
+        {isAdmin && articleId && (
+          <Link
+            href={`/admin/articles/edit/${articleId}`}
+            className="text-amber-500 hover:text-amber-400 text-[11px] font-bold uppercase underline flex items-center gap-1"
+          >
+            <Edit3 className="w-3 h-3" /> Edit Intel
+          </Link>
+        )}
       </div>
 
       {/* Header */}
@@ -100,19 +139,35 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
           </p>
         )}
 
-        {/* 🌟 Clickable Tags Section */}
+        {/* Collapsible Tags Section */}
         {article.tags && article.tags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <span className="text-[10px] text-gray-500 uppercase font-bold">TAGS:</span>
-            {article.tags.map((tag: string, idx: number) => (
-              <Link
-                key={idx}
-                href={`/articles/tag/${encodeURIComponent(tag)}`}
-                className="bg-amber-500/10 border border-amber-500/20 hover:border-amber-500 text-amber-400 text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono transition-colors"
-              >
-                #{tag}
-              </Link>
-            ))}
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-gray-500 uppercase font-bold">TAGS:</span>
+              {article.tags.length > 6 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTags(!showAllTags)}
+                  className="text-[10px] text-amber-500 hover:text-amber-400 uppercase font-bold transition-colors cursor-pointer"
+                >
+                  {showAllTags ? 'Show Less ▴' : `+${article.tags.length - 6} More ▾`}
+                </button>
+              )}
+            </div>
+
+            <div className={`flex flex-wrap items-center gap-2 overflow-hidden transition-all duration-300 ${
+              showAllTags ? 'max-h-96' : 'max-h-[52px]'
+            }`}>
+              {article.tags.map((tag: string, idx: number) => (
+                <Link
+                  key={idx}
+                  href={`/articles/tag/${encodeURIComponent(tag)}`}
+                  className="bg-amber-500/10 border border-amber-500/20 hover:border-amber-500 text-amber-400 text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono transition-colors"
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </header>
