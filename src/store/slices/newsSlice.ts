@@ -12,6 +12,9 @@ export interface NewsItem {
   link?: string;
   summary: string;
   content?: string;
+  image?: string;      // 👈 Added
+  imageUrl?: string;   // 👈 Added
+  thumbnail?: string;  // 👈 Added
   isPublished?: boolean;
   createdAt?: string;
 }
