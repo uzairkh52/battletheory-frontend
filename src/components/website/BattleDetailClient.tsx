@@ -125,22 +125,21 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
       )}
 
       {/* Detailed Content / Description Section */}
-      {/* Detailed Content / Description Section */}
-{/* Detailed Content / Description Section */}
-<div className="space-y-3">
-  <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">
-    TACTICAL ENGAGEMENT OVERVIEW
-  </h3>
-  <div className="bg-[#111827] border border-gray-800 p-6 rounded-lg overflow-hidden">
-    <div
-      className="text-gray-200 leading-relaxed font-sans text-sm break-all break-words [word-break:break-word] 
-                 [&_*]:!text-gray-200 [&_p]:!text-gray-200 [&_span]:!text-gray-200
-                 [&_p]:mb-4 [&_br]:block [&_br]:content-[''] [&_br]:my-2
-                 [&_a]:!text-amber-500 [&_a]:underline [&_a]:font-bold [&_a]:my-2 [&_a]:inline-block"
-      dangerouslySetInnerHTML={{ __html: battleDescription }}
-    />
-  </div>
-</div>
+      <div className="space-y-3">
+        <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold">
+          TACTICAL ENGAGEMENT OVERVIEW
+        </h3>
+        <div className="bg-[#111827] border border-gray-800 p-6 rounded-lg overflow-hidden">
+          <div
+            className="text-gray-200 leading-relaxed font-sans text-sm break-all break-words [word-break:break-word] 
+                       [&_*]:!text-gray-200 [&_p]:!text-gray-200 [&_span]:!text-gray-200
+                       [&_p]:mb-4 [&_br]:block [&_br]:content-[''] [&_br]:my-2
+                       [&_a]:!text-amber-500 [&_a]:underline [&_a]:font-bold [&_a]:my-2 [&_a]:inline-block"
+            dangerouslySetInnerHTML={{ __html: battleDescription }}
+          />
+        </div>
+      </div>
+
       {/* Tactical Phases */}
       {battle.tacticalPhases && battle.tacticalPhases.length > 0 && (
         <div className="space-y-4">
@@ -166,6 +165,22 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 🌟 MOVED DOWN: TACTICAL VIDEO BRIEFING (YOUTUBE / FACEBOOK) */}
+      {(battle as any).videoEmbed && (battle as any).videoEmbed.trim() !== '' && (
+        <div className="space-y-3 max-w-2xl mx-auto pt-2">
+          <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold flex items-center gap-2">
+            <span>🎬</span> TACTICAL VIDEO BRIEFING // EMBED INTEL
+          </h3>
+          <div className="bg-[#111827] border border-gray-800 p-3 rounded-lg overflow-hidden shadow-lg">
+            <div
+              className="aspect-video w-full flex justify-center items-center rounded overflow-hidden bg-black
+                         [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:border-0 [&_iframe]:rounded"
+              dangerouslySetInnerHTML={{ __html: (battle as any).videoEmbed }}
+            />
           </div>
         </div>
       )}

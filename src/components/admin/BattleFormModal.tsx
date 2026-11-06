@@ -32,6 +32,7 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
     latitude: 28.2072,
     longitude: -177.3735,
     featuredImage: '',
+    videoEmbed: '',
   });
 
   const [phases, setPhases] = useState<PhaseInput[]>([{ name: '', description: '' }]);
@@ -84,6 +85,7 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
         latitude: editingBattle.coordinates?.lat ?? editingBattle.coordinates?.[0] ?? 28.2072,
         longitude: editingBattle.coordinates?.lng ?? editingBattle.coordinates?.[1] ?? -177.3735,
         featuredImage: editingBattle.featuredImage || '',
+        videoEmbed: editingBattle.videoEmbed || '',
       });
 
       if (editingBattle.tacticalPhases && editingBattle.tacticalPhases.length > 0) {
@@ -115,6 +117,7 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
         latitude: 28.2072,
         longitude: -177.3735,
         featuredImage: '',
+        videoEmbed: '',
       });
       setPhases([{ name: '', description: '' }]);
     }
@@ -186,6 +189,7 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
       phases: validPhases,
       tacticalPhases: validPhases.map((p) => ({ phaseName: p.name, details: p.description })),
       featuredImage: formData.featuredImage,
+      videoEmbed: formData.videoEmbed,
     };
 
     let resultAction;
@@ -216,13 +220,12 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
           <h2 className="text-sm font-black text-amber-500 uppercase tracking-wider">
             {editingBattle ? 'Edit Battle Record' : 'Create Battle Record'}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white cursor-pointer">
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* BattleFormFields already includes the Tactical Map Picker component */}
           <BattleFormFields
             formData={formData}
             categories={availableCategories}
@@ -243,14 +246,14 @@ export default function BattleFormModal({ isOpen, onClose, editingBattle }: Batt
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-bold uppercase rounded"
+              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-bold uppercase rounded cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isCreating || isUpdating}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase rounded disabled:opacity-50"
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase rounded disabled:opacity-50 cursor-pointer"
             >
               {isCreating || isUpdating ? 'Saving...' : editingBattle ? 'Update Battle' : 'Save Battle'}
             </button>

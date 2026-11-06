@@ -25,6 +25,7 @@ interface BattleFormFieldsProps {
     latitude: number;
     longitude: number;
     featuredImage: string;
+    videoEmbed?: string;
   };
   categories: any[];
   phases: PhaseInput[];
@@ -74,7 +75,7 @@ export default function BattleFormFields({
     onChange('longitude', Number(lng.toFixed(6)));
   };
 
-  // Editor Toolbar Configuration (WordPress-style)
+  // Editor Toolbar Configuration
   const modules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -245,7 +246,7 @@ export default function BattleFormFields({
         />
       </div>
 
-      {/* 🌟 Description / Detailed Article Body (ReactQuill Rich Text Editor) */}
+      {/* Description / Detailed Article Body */}
       <div>
         <label className="block text-gray-400 mb-1 uppercase">
           Description / Battle History (Rich Text Editor)
@@ -256,13 +257,27 @@ export default function BattleFormFields({
             value={formData.description || ''}
             onChange={(contentValue) => onChange('description', contentValue)}
             modules={modules}
-            placeholder="Detailed engagement history... Add headings, formatted text, Facebook video links & Amazon links."
+            placeholder="Detailed engagement history... Add headings, formatted text & links."
             className="min-h-[200px]"
           />
         </div>
       </div>
 
-      {/* 📍 Interactive Map Picker Section */}
+      {/* Video Embed Code */}
+      <div className="space-y-1 pt-2">
+        <label className="block text-amber-500 uppercase tracking-wider font-bold">
+          Video Embed Code (Optional - YouTube / Facebook)
+        </label>
+        <textarea
+          value={formData.videoEmbed || ''}
+          onChange={(e) => onChange('videoEmbed', e.target.value)}
+          placeholder='Yahan YouTube ya Facebook ka iframe code paste karein (e.g. <iframe src="..."></iframe>)'
+          rows={3}
+          className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs font-mono"
+        />
+      </div>
+
+      {/* Interactive Map Picker Section */}
       <div className="space-y-2 bg-black/40 p-3 border border-gray-800 rounded font-mono">
         <div className="flex justify-between items-center mb-1">
           <label className="block text-amber-500 text-[10px] uppercase font-bold tracking-wider">
