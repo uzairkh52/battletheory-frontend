@@ -66,7 +66,6 @@ export const fetchAllArticles = createAsyncThunk(
   'article/fetchAll',
   async (tag: string | undefined, { rejectWithValue }) => {
     try {
-      // Agar tag pass ho ga toh query bany gi, warna saare articles aayenge
       const endpoint = tag ? `/articles?tag=${encodeURIComponent(tag)}` : API_ENDPOINTS.ARTICLES.LIST;
       const res = await API.get(endpoint);
       return res.data;
@@ -77,7 +76,6 @@ export const fetchAllArticles = createAsyncThunk(
     }
   }
 );
-
 
 export const fetchArticleCategories = createAsyncThunk(
   'article/fetchCategories',
@@ -207,7 +205,7 @@ export const editComment = createAsyncThunk(
       const res = await API.patch(`/articles/comments/${commentId}`, { text }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      return res.data; // updated comment object
+      return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || 'Failed to edit comment.');
     }
@@ -223,7 +221,7 @@ export const deleteComment = createAsyncThunk(
       await API.delete(`/articles/comments/${commentId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      return commentId; // deleted comment id
+      return commentId;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || 'Failed to delete comment.');
     }
@@ -309,7 +307,6 @@ const articleSlice = createSlice({
         state.submittingComment = false;
         state.error = action.payload as string;
       })
-      // Update comment after like toggle
       .addCase(toggleLikeComment.fulfilled, (state, action) => {
         if (state.article && state.article.comments) {
           const index = state.article.comments.findIndex(c => c._id === action.payload._id);
@@ -321,13 +318,11 @@ const articleSlice = createSlice({
           }
         }
       })
-      // Push new reply into comments list
       .addCase(replyToComment.fulfilled, (state, action) => {
         if (state.article && state.article.comments) {
           state.article.comments.unshift(action.payload);
         }
       })
-      // Edit comment in state
       .addCase(editComment.fulfilled, (state, action) => {
         if (state.article && state.article.comments) {
           const index = state.article.comments.findIndex(c => c._id === action.payload._id);
@@ -340,7 +335,6 @@ const articleSlice = createSlice({
           }
         }
       })
-      // Delete comment and its nested replies from state
       .addCase(deleteComment.fulfilled, (state, action) => {
         if (state.article && state.article.comments) {
           const deletedId = action.payload;

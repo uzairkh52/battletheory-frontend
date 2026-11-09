@@ -13,15 +13,12 @@ export const metadata: Metadata = {
   },
 };
 
-// ⚡ Server-side data fetching (Instant load with Vercel caching)
-// ⚡ Server-side data fetching (Instant load with Vercel caching)
+// ⚡ Server-side data fetching (Instant load with Next.js caching)
 async function getArticles() {
   try {
-    // Base URL define karein aur ensure karein ke /api end mein lazmi ho
-    const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const API_BASE = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-    const res = await fetch(`${API_BASE}/articles`, {
+    const res = await fetch(`${API_URL}/articles`, {
       next: { revalidate: 30 }, // Cache data for 30 seconds for blazing fast speed
     });
     
