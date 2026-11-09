@@ -1,14 +1,20 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { RootState } from '../store';
+import { getApiBaseUrl } from '@/utils/getApiBaseUrl';
 
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+    baseUrl: getApiBaseUrl(),
     prepareHeaders: (headers, { getState }) => {
-      const token =
-        (getState() as RootState).auth?.token ||
-        (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+      // 1. Pehle Redux Auth state se token check karein
+      const reduxToken = (getState() as RootState).auth?.token;
+      
+      // 2. Fallback to localStorage if not found in Redux state (SSR-safe check)
+      const storageToken =
+        typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+      const token = reduxToken || storageToken;
 
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
@@ -16,6 +22,7 @@ export const baseApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Article'],
+  // Clean Cache Management Keys
+  tagTypes: ['Article', 'Battle', 'News', 'User', 'Bookmark'],
   endpoints: () => ({}),
 });

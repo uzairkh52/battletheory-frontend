@@ -26,7 +26,9 @@ export default function NewsFeedClient() {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  // 🌟 Ensure Base URL always appends /api correctly
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
   const fetchNews = async (pageNumber: number, isInitial = false) => {
     try {

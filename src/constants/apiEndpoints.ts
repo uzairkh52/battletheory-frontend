@@ -6,8 +6,8 @@ export const API_ENDPOINTS = {
   },
   CATEGORIES: {
     LIST: '/categories',
-    ARTICLES: '/categories/articles', // 🌟 Sirf Articles ki categories ke liye
-    BATTLES: '/categories/battles',   // 🌟 Sirf Battles ki categories ke liye
+    ARTICLES: '/categories/articles',
+    BATTLES: '/categories/battles',
   },
   BATTLES: {
     LIST: '/battles',
@@ -24,14 +24,14 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/articles/${id}`,
   },
   NEWS: {
-    LIST: '/news',
-    DETAIL: (id: string) => `/news/${id}`,
-    CREATE: '/news',
-    UPDATE: (id: string) => `/news/${id}`,
-    DELETE: (id: string) => `/news/${id}`,
+    // 🌟 Express backend `/api/news` ko point karne ke liye prefix add kar diya gaya hai
+    LIST: '/api/news',
+    DETAIL: (id: string) => `/api/news/${id}`,
+    CREATE: '/api/news',
+    UPDATE: (id: string) => `/api/news/${id}`,
+    DELETE: (id: string) => `/api/news/${id}`,
   },
   SEARCH: '/search',
-  // 🌟 Added Contact Endpoint
   CONTACT: '/contact',
 } as const;
 

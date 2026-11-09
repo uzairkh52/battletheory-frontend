@@ -57,7 +57,7 @@ export const fetchNewsBySlug = createAsyncThunk(
   'news/fetchNewsBySlug',
   async (slug: string, { rejectWithValue }) => {
     try {
-      const response = await API.get(`/news/slug/${slug}`);
+      const response = await API.get(`/api/news/slug/${slug}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
