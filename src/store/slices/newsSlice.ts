@@ -57,7 +57,7 @@ export const fetchNewsBySlug = createAsyncThunk(
   'news/fetchNewsBySlug',
   async (slug: string, { rejectWithValue }) => {
     try {
-      const response = await API.get(`/api/news/slug/${slug}`);
+      const response = await API.get(`/news/slug/${slug}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -87,7 +87,7 @@ export const updateNews = createAsyncThunk(
   'news/updateNews',
   async ({ id, newsData }: { id: string; newsData: Partial<NewsItem> }, { rejectWithValue }) => {
     try {
-      const response = await API.put(`/api/news/${id}`, newsData);
+      const response = await API.put(`/news/${id}`, newsData);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(

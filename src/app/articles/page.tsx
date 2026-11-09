@@ -14,11 +14,17 @@ export const metadata: Metadata = {
 };
 
 // ⚡ Server-side data fetching (Instant load with Vercel caching)
+// ⚡ Server-side data fetching (Instant load with Vercel caching)
 async function getArticles() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://battletheory-backend.onrender.com'}/api/articles`, {
+    // Base URL define karein aur ensure karein ke /api end mein lazmi ho
+    const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const API_BASE = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
+
+    const res = await fetch(`${API_BASE}/articles`, {
       next: { revalidate: 30 }, // Cache data for 30 seconds for blazing fast speed
     });
+    
     if (!res.ok) throw new Error('Failed to fetch articles');
     return await res.json();
   } catch (error) {
