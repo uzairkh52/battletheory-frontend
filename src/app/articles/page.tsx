@@ -16,10 +16,11 @@ export const metadata: Metadata = {
 // ⚡ Server-side data fetching (Instant load with Next.js caching)
 async function getArticles() {
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    // Vercel / Production environment URL handling
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory-backend.onrender.com/api';
 
     const res = await fetch(`${API_URL}/articles`, {
-      next: { revalidate: 30 }, // Cache data for 30 seconds for blazing fast speed
+      next: { revalidate: 30 },
     });
     
     if (!res.ok) throw new Error('Failed to fetch articles');
