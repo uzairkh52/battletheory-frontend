@@ -1,38 +1,42 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Shield, ChevronRight } from 'lucide-react';
 import BookmarkButton from '@/components/website/BookmarkButton';
 
-export const metadata: Metadata = {
-  title: 'Military Theory & Analysis Articles',
-  description: 'In-depth military history essays, weapon breakdown, and strategic research briefs.',
-  openGraph: {
-    title: 'Military Theory & Analysis Articles | Battle Theory',
-    description: 'Explore tactical research essays and declassified military intelligence logs.',
-    url: '/articles',
-  },
-};
+export default function ArticlesPage() {
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-// ⚡ Server-side data fetching (Instant load with Next.js caching)
-async function getArticles() {
-  try {
-    // Vercel / Production environment URL handling
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory-backend.onrender.com/api';
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setLoading(true);
+        // Local env se API URL uthayega, fallback local 5000 rakha hai testing ke liye
+        const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+        const cleanUrl = rawBaseUrl.replace(/\/api\/?$/, '');
+        const API_BASE = `${cleanUrl}/api`;
 
-    const res = await fetch(`${API_URL}/articles`, {
-      next: { revalidate: 30 },
-    });
-    
-    if (!res.ok) throw new Error('Failed to fetch articles');
-    return await res.json();
-  } catch (error) {
-    console.error('Error fetching articles:', error);
-    return [];
-  }
-}
+        const res = await fetch(`${API_BASE}/articles`);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP Error! Status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        setArticles(data);
+      } catch (err: any) {
+        console.error('Error fetching articles:', err);
+        setError(err.message || 'Failed to load articles');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-export default async function ArticlesPage() {
-  const articles = await getArticles();
+    fetchArticles();
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto my-8 px-4 space-y-6 font-mono text-white">
@@ -45,7 +49,19 @@ export default async function ArticlesPage() {
         </h1>
       </div>
 
-      {articles.length === 0 ? (
+      {loading ? (
+        <div className="p-8 text-center border border-dashed border-gray-800 rounded">
+          <p className="text-xs text-amber-500 animate-pulse uppercase">
+            Fetching Tactical Articles Data...
+          </p>
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center border border-red-800/40 bg-red-950/20 rounded">
+          <p className="text-xs text-red-500 uppercase">
+            Error: {error}
+          </p>
+        </div>
+      ) : articles.length === 0 ? (
         <div className="p-8 text-center border border-dashed border-gray-800 rounded space-y-4">
           <p className="text-xs text-gray-500 uppercase">
             No intelligence articles found in database.
