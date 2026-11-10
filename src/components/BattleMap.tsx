@@ -61,6 +61,9 @@ export default function BattleMap({ battles, selectedBattle, onSelectBattle }: M
       ? [selectedLat, selectedLng]
       : [20, 0];
 
+  // Env Key safe fallback check
+  const stadiaApiKey = process.env.NEXT_PUBLIC_STADIA_API_KEY || '';
+
   return (
     <div className="w-full h-[380px] rounded-lg overflow-hidden border border-gray-800 relative z-0">
       <MapContainer
@@ -70,9 +73,9 @@ export default function BattleMap({ battles, selectedBattle, onSelectBattle }: M
         style={{ height: '100%', width: '100%', backgroundColor: '#0b0f19' }}
       >
         <TileLayer
-  attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
-  url={`https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${process.env.NEXT_PUBLIC_STADIA_API_KEY}`}
-/>
+          attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url={`https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${stadiaApiKey}`}
+        />
 
         {/* Dynamic FlyTo Controller */}
         <MapRecenter lat={selectedLat} lng={selectedLng} />
