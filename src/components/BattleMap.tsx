@@ -61,8 +61,8 @@ export default function BattleMap({ battles, selectedBattle, onSelectBattle }: M
       ? [selectedLat, selectedLng]
       : [20, 0];
 
-  // Env Key safe fallback check
-  const stadiaApiKey = process.env.NEXT_PUBLIC_STADIA_API_KEY || '';
+  // Direct safe key fallback configured to prevent undefined environment variables on Vercel
+  const stadiaApiKey = process.env.NEXT_PUBLIC_STADIA_API_KEY || '01390327-548e-4572-8703-506fe9a67925';
 
   return (
     <div className="w-full h-[380px] rounded-lg overflow-hidden border border-gray-800 relative z-0">
