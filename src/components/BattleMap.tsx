@@ -70,9 +70,9 @@ export default function BattleMap({ battles, selectedBattle, onSelectBattle }: M
         style={{ height: '100%', width: '100%', backgroundColor: '#0b0f19' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
-        />
+  attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>'
+  url={`https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${process.env.NEXT_PUBLIC_STADIA_API_KEY}`}
+/>
 
         {/* Dynamic FlyTo Controller */}
         <MapRecenter lat={selectedLat} lng={selectedLng} />
