@@ -29,12 +29,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (!res.ok) return [];
 
       const data = await res.json();
-      const items = Array.isArray(data) ? data : data.articles || data.news || data.battles || data.data || [];
+      
+      // Handle all possible API response structures based on screenshots
+      let items: any[] = [];
+      if (Array.isArray(data)) {
+        items = data;
+      } else if (data && typeof data === 'object') {
+        items = data.battles || data.articles || data.news || data.data || data.results || [];
+      }
 
       return items.map((item: any) => {
-        // Agar route /news hai aur item ka slug nahi hai, toh title se slug generate karein
         let slug = item.slug || item._id || item.id;
-        if (routePrefix === '/news' && item.title) {
+        
+        // News ya items jinme slug na ho, unke liye title-based slug fallback
+        if (routePrefix === '/news' && item.title && !item.slug) {
           slug = item.title
             .toString()
             .toLowerCase()
