@@ -31,12 +31,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const data = await res.json();
       const items = Array.isArray(data) ? data : data.articles || data.news || data.battles || data.data || [];
 
-      return items.map((item: any) => ({
-        url: `${BASE_URL}${routePrefix}/${item.slug || item._id || item.id}`,
-        lastModified: new Date(item.updatedAt || item.createdAt || Date.now()).toISOString(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }));
+      return items.map((item: any) => {
+        // Agar route /news hai aur item ka slug nahi hai, toh title se slug generate karein
+        let slug = item.slug || item._id || item.id;
+        if (routePrefix === '/news' && item.title) {
+          slug = item.title
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/['"]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-');
+        }
+
+        return {
+          url: `${BASE_URL}${routePrefix}/${slug}`,
+          lastModified: new Date(item.updatedAt || item.createdAt || Date.now()).toISOString(),
+          changeFrequency: 'weekly' as const,
+          priority: 0.7,
+        };
+      });
     } catch (error) {
       console.error(`Error fetching sitemap for ${routePrefix}:`, error);
       return [];
