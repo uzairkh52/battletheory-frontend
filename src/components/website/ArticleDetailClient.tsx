@@ -8,33 +8,29 @@ import { fetchArticleBySlug } from '@/store/slices/articleSlice';
 import CommentSection from '@/components/CommentSection';
 import { Edit3, ShieldAlert } from 'lucide-react';
 
-export default function ArticleDetailClient({ slug }: { slug: string }) {
+export default function ArticleDetailClient({ slug, initialArticle }: { slug: string; initialArticle?: any }) {
   const dispatch = useAppDispatch();
-  const { article, loading, submittingComment, error } = useAppSelector(
+  const { article: storeArticle, loading, submittingComment, error } = useAppSelector(
     (state) => state.articles
   );
 
-  // 🌟 FIX: Updated to match your authSlice schema (isAdmin boolean check)
+  const article = storeArticle || initialArticle;
+
   const { user } = useAppSelector((state) => state.auth);
   const isAdmin = Boolean(user?.isAdmin || user?.role === 'admin');
 
   const [showAllTags, setShowAllTags] = useState(false);
 
   useEffect(() => {
-    if (slug) {
+    if (slug && !initialArticle) {
       dispatch(fetchArticleBySlug(slug));
     }
-  }, [slug, dispatch]);
+  }, [slug, dispatch, initialArticle]);
 
-  useEffect(() => {
-    if (article?.title) {
-      document.title = `${article.title} | Battle Theory`;
-    }
-  }, [article]);
-
-  if (loading) {
+  if (!article && loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 font-mono">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-mono text-amber-500 animate-pulse">
           [ DECRYPTING FIELD INTELLIGENCE BRIEFING... ]
         </p>
@@ -42,7 +38,7 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
     );
   }
 
-  if (error || !article) {
+  if (!article && error) {
     return (
       <div className="max-w-3xl mx-auto my-12 p-8 bg-[#111827] border border-red-900/50 rounded-lg text-center space-y-4 font-mono">
         <h2 className="text-xl font-black text-red-400 uppercase tracking-wider">
@@ -61,13 +57,14 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
     );
   }
 
+  if (!article) return null;
+
   const imageUrl = article.featuredImage || article.imageUrl || article.image;
   const articleId = article._id || article.id;
 
   return (
     <article className={`${styles.articleContainer} max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono relative`}>
       
-      {/* 🌟 WordPress Style Admin Quick Edit Bar (Visible when user.isAdmin is true) */}
       {isAdmin && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between shadow-lg backdrop-blur-sm sticky top-4 z-40">
           <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase">
@@ -86,7 +83,6 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* Navigation Breadcrumb */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-2">
           <Link href="/articles" className="hover:text-amber-500 transition-colors">
@@ -106,7 +102,6 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
         )}
       </div>
 
-      {/* Header */}
       <header className="border-b border-gray-800 pb-6 space-y-4">
         <div className="flex items-center gap-2 text-amber-500 mb-1">
           <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
@@ -139,7 +134,6 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
           </p>
         )}
 
-        {/* Collapsible Tags Section */}
         {article.tags && article.tags.length > 0 && (
           <div className="flex flex-col gap-2 pt-2">
             <div className="flex items-center justify-between">
@@ -172,7 +166,6 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
         )}
       </header>
 
-      {/* Featured Image Display Container */}
       {imageUrl && (
         <div className="w-full h-72 md:h-96 relative rounded-lg overflow-hidden border border-gray-800 bg-gray-900">
           <img
@@ -183,19 +176,17 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* Main Body - Strictly Contained HTML Render */}
       <div className="bg-[#111827] border border-gray-800 rounded-lg p-6 md:p-8 space-y-6 overflow-hidden">
         <h3 className="text-xs text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2 font-bold">
           DECLASSIFIED BRIEFING BODY
         </h3>
         
         <div 
-          className="prose prose-invert max-w-none text-gray-300 font-sans text-sm md:text-base leading-relaxed space-y-4 break-words overflow-hidden [word-break:break-word] [&>p]:mb-4 [&>p]:break-words [&>h1]:text-2xl [&>h1]:font-black [&>h1]:text-white [&>h1]:mt-6 [&>h1]:mb-3 [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-amber-500 [&>h2]:mt-6 [&>h2]:mb-3 [&>h3]:text-lg [&>h3]:font-bold [&>h3]:text-amber-400 [&>blockquote]:italic [&>blockquote]:border-l-2 [&>blockquote]:border-amber-500 [&>blockquote]:pl-4 [&>blockquote]:my-4 [&>blockquote]:bg-[#0b0f19] [&>blockquote]:py-2 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>img]:rounded-lg [&>img]:my-6 [&>img]:max-w-full [&>img]:h-auto [&>img]:mx-auto"
+          className="prose prose-invert max-w-none text-gray-300 font-sans text-sm md:text-base leading-relaxed space-y-4 break-words overflow-hidden [word-break:break-word]"
           dangerouslySetInnerHTML={{ __html: article.content }} 
         />
       </div>
 
-      {/* Facebook Video Embed Render Section */}
       {article.videoEmbed && (
         <div className="bg-[#111827] border border-gray-800 rounded-lg p-6 md:p-8 space-y-4 overflow-hidden">
           <h3 className="text-xs text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2 font-bold">
@@ -208,7 +199,6 @@ export default function ArticleDetailClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* Modular Comments Section Component */}
       <CommentSection 
         slug={article.slug} 
         comments={article.comments || []} 

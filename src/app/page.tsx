@@ -19,6 +19,19 @@ import 'swiper/css/pagination';
 // Separate SCSS file import
 import '@/styles/slider.scss';
 
+// Helper function to strip HTML tags and entities
+const stripHtml = (html: string) => {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace non-breaking spaces
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export default function Home() {
   const dispatch = useAppDispatch();
 
@@ -160,6 +173,9 @@ export default function Home() {
                   ? b.featuredImage 
                   : 'https://images.unsplash.com/photo-1579965101323-8832a84a6b57?w=600&auto=format&fit=crop&q=60';
                 
+                const rawDesc = b.description || b.summary || '';
+                const cleanDesc = stripHtml(rawDesc);
+
                 return (
                   <SwiperSlide key={b._id || b.slug}>
                     <div className="bg-[#111827] border border-gray-800 rounded-lg overflow-hidden flex flex-col justify-between hover:border-amber-500/50 transition-all h-full">
@@ -184,7 +200,7 @@ export default function Home() {
                             </Link>
                           </h3>
                           <p className="text-xs text-gray-400 line-clamp-2 font-sans">
-                            {b.description || b.summary || 'Tactical overview of engagement parameters...'}
+                            {cleanDesc || 'Tactical overview of engagement parameters...'}
                           </p>
                         </div>
                         <Link
@@ -223,6 +239,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {defenseNewsItems.slice(0, 4).map((news: any) => {
                 const newsLink = `/news/${news.slug || news._id}`;
+                const cleanNewsSummary = stripHtml(news.summary || news.description || '');
                 return (
                   <div 
                     key={news._id || news.slug || Math.random()} 
@@ -239,7 +256,7 @@ export default function Home() {
                         <Link href={newsLink}>{news.title}</Link>
                       </h3>
                       <p className="text-xs text-gray-400 font-sans leading-relaxed line-clamp-2">
-                        {news.summary || news.description}
+                        {cleanNewsSummary}
                       </p>
                     </div>
                     <div className="pt-2 border-t border-gray-900 flex justify-end">
@@ -293,6 +310,8 @@ export default function Home() {
                   ? article.category.name 
                   : article.category || 'WWII / DOCTRINE';
 
+                const cleanArticleSummary = stripHtml(article.summary || article.description || '');
+
                 return (
                   <SwiperSlide key={article._id || article.slug}>
                     <div className="flex flex-col sm:flex-row gap-4 items-start bg-gray-50 p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all h-full">
@@ -313,7 +332,7 @@ export default function Home() {
                           </Link>
                         </h3>
                         <p className="text-xs text-gray-700 font-sans line-clamp-2 leading-relaxed">
-                          {article.summary || article.description || 'Tactical research dossier analysis...'}
+                          {cleanArticleSummary || 'Tactical research dossier analysis...'}
                         </p>
                         <Link href={articleLink} className="inline-block text-[11px] font-bold text-amber-700 hover:underline pt-1">
                           Read Analysis →
