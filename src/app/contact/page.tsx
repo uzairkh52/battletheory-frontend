@@ -81,9 +81,9 @@ export default function ContactPage() {
             <div className="space-y-4 text-xs">
               <div className="space-y-1">
                 <span className="text-gray-500 uppercase tracking-wider text-[10px] block">Primary Email Desk</span>
-                <a href="mailto:uzairkh52@gmail.com" className="text-amber-500 hover:text-amber-400 font-bold break-all">
+                {/* <a href="mailto:uzairkh52@gmail.com" className="text-amber-500 hover:text-amber-400 font-bold break-all">
                   uzairkh52@gmail.com
-                </a>
+                </a> */}
               </div>
 
               <div className="space-y-1">
