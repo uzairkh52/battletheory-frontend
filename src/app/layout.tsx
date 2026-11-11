@@ -12,6 +12,19 @@ export const metadata: Metadata = {
   },
   description:
     "Tactical history, battle maps, declassified archives, and modern military tech analysis.",
+  
+  // ---> Exact file names configuration for Next.js App Router <---
+  icons: {
+    icon: [
+      { url: "/fav-icon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/fav-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: ["/fav-icon-48.png"],
+    apple: [
+      { url: "/fav-icon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+
   keywords: [
     "Military History",
     "Tactical Intelligence",
@@ -61,6 +74,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Explicit HTML link tags for Google Search Crawler & browsers */}
+        <link rel="icon" href="/fav-icon-48.png" sizes="48x48" type="image/png" />
+        <link rel="icon" href="/fav-icon-512.png" sizes="512x512" type="image/png" />
+        <link rel="apple-touch-icon" href="/fav-icon-180.png" sizes="180x180" type="image/png" />
+
         {/* Google Tag Manager (GTM) */}
         <Script
           id="google-tag-manager"
@@ -70,7 +88,7 @@ export default function RootLayout({
               (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
               new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
               j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              'https://www.googletagmanager.com/gtag/js?id='+i+dl;f.parentNode.insertBefore(j,f);
             })(window,document,'script','dataLayer','GTM-PXTH65GP');
             `,
           }}
@@ -105,9 +123,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {/* Main flex container for edge-to-edge layout support */}
-          <main className="flex-1 w-full">
-            {children}
-          </main>
+          <main className="flex-1 w-full">{children}</main>
           <Footer />
         </Providers>
       </body>
