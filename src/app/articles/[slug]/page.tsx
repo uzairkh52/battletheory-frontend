@@ -6,10 +6,13 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+// Production Backend Domain (Agar env missing bhi ho toh yeh production base use karega)
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
+const SITE_URL = 'https://battletheory.net';
+
 async function getArticle(slug: string) {
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const res = await fetch(`${API_URL}/articles/slug/${slug}`, {
+    const res = await fetch(`${API_BASE}/articles/slug/${slug}`, {
       next: { revalidate: 60 },
     });
     if (res.ok) {
@@ -24,7 +27,7 @@ async function getArticle(slug: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticle(slug);
-  const articleUrl = `https://battletheory.net/articles/${slug}`;
+  const articleUrl = `${SITE_URL}/articles/${slug}`;
 
   if (article) {
     const title = article.title || 'Strategic Research Briefing';
@@ -33,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = rawDescription
       ? rawDescription.slice(0, 157).trim() + (rawDescription.length > 157 ? '...' : '')
       : `Declassified tactical research essay on ${title} by Battle Theory.`;
-    const imageUrl = article.featuredImage || article.imageUrl || article.image || 'https://battletheory.net/og-default.jpg';
+    const imageUrl = article.featuredImage || article.imageUrl || article.image || `${SITE_URL}/og-image.jpg`;
 
     return {
       title: `${title} | Battle Theory`,
@@ -88,27 +91,27 @@ export default async function ArticleDetailPage({ params }: Props) {
           initialArticle.featuredImage ||
           initialArticle.imageUrl ||
           initialArticle.image ||
-          'https://battletheory.net/og-default.jpg',
+          `${SITE_URL}/og-image.jpg`,
         ],
         datePublished: initialArticle.createdAt,
         dateModified: initialArticle.updatedAt || initialArticle.createdAt,
         author: {
           '@type': 'Person',
           name: initialArticle.authorName || 'Muhammad Uzair',
-          url: 'https://battletheory.net',
+          url: SITE_URL,
         },
         publisher: {
           '@type': 'Organization',
           name: 'Battle Theory',
-          url: 'https://battletheory.net',
+          url: SITE_URL,
           logo: {
             '@type': 'ImageObject',
-            url: 'https://battletheory.net/logo.png',
+            url: `${SITE_URL}/logo.png`,
           },
         },
         mainEntityOfPage: {
           '@type': 'WebPage',
-          '@id': `https://battletheory.net/articles/${slug}`,
+          '@id': `${SITE_URL}/articles/${slug}`,
         },
       }
     : null;
