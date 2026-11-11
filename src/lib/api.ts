@@ -7,7 +7,8 @@ const getApiBaseUrl = (): string => {
     const trimmedUrl = envUrl.replace(/\/+$/, '');
     return trimmedUrl.endsWith('/api') ? trimmedUrl : `${trimmedUrl}/api`;
   }
-  return 'http://localhost:5000/api';
+  // Hardcoded localhost ki jagah AWS EC2 IP fallback set kar diya:
+  return 'http://75.101.209.235:5000/api';
 };
 
 const API = axios.create({
@@ -15,7 +16,7 @@ const API = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // Render cold start timeout handling
+  timeout: 15000,
 });
 
 // Pass auth token automatically for request headers
