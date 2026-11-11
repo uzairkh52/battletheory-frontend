@@ -7,8 +7,8 @@ const getApiBaseUrl = (): string => {
     const trimmedUrl = envUrl.replace(/\/+$/, '');
     return trimmedUrl.endsWith('/api') ? trimmedUrl : `${trimmedUrl}/api`;
   }
-  // Hardcoded localhost ki jagah AWS EC2 IP fallback set kar diya:
-  return 'http://75.101.209.235:5000/api';
+  // Yahan AWS IP ki jagah apni domain wali API URL set kar di hai:
+  return 'https://api.battletheory.net/api';
 };
 
 const API = axios.create({
@@ -16,7 +16,7 @@ const API = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  timeout: 30000,
 });
 
 // Pass auth token automatically for request headers
