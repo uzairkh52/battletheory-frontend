@@ -112,7 +112,7 @@ export default function Home() {
         <section className="relative rounded-xl border border-amber-500/20 bg-gradient-to-r from-gray-900 via-[#111827] to-gray-900 p-8 md:p-12 overflow-hidden shadow-2xl">
           <div className="max-w-2xl space-y-4">
             <span className="text-xs font-bold uppercase tracking-widest text-amber-500 bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">
-              [ TACTICAL OPERATIONS ARCHIVE v1.1 ]
+              [ TACTICAL OPERATIONS ARCHIVE v1.2 ]
             </span>
             <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight uppercase font-sans">
               DEEP-DIVE MILITARY HISTORY & TACTICAL ANALYSIS

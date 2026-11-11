@@ -18,58 +18,74 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1.0 : 0.8,
   }));
 
-  const fetchDynamicRoutes = async (
-    endpoint: string,
-    routePrefix: string
-  ): Promise<MetadataRoute.Sitemap> => {
+  try {
+    console.log('Fetching from API_BASE:', API_BASE);
+    
+    // Let's fetch them one by one with explicit error logging
+    let battles: any[] = [];
+    let articles: any[] = [];
+    let news: any[] = [];
+
     try {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        next: { revalidate: 3600 },
-      });
-      if (!res.ok) return [];
-
-      const data = await res.json();
-      
-      // Handle all possible API response structures based on screenshots
-      let items: any[] = [];
-      if (Array.isArray(data)) {
-        items = data;
-      } else if (data && typeof data === 'object') {
-        items = data.battles || data.articles || data.news || data.data || data.results || [];
-      }
-
-      return items.map((item: any) => {
-        let slug = item.slug || item._id || item.id;
-        
-        // News ya items jinme slug na ho, unke liye title-based slug fallback
-        if (routePrefix === '/news' && item.title && !item.slug) {
-          slug = item.title
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/['"]/g, '')
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-');
-        }
-
-        return {
-          url: `${BASE_URL}${routePrefix}/${slug}`,
-          lastModified: new Date(item.updatedAt || item.createdAt || Date.now()).toISOString(),
-          changeFrequency: 'weekly' as const,
-          priority: 0.7,
-        };
-      });
-    } catch (error) {
-      console.error(`Error fetching sitemap for ${routePrefix}:`, error);
-      return [];
+      const res = await fetch(`${API_BASE}${API_ENDPOINTS.BATTLES.LIST}`, { cache: 'no-store' });
+      const json = await res.json();
+      battles = Array.isArray(json) ? json : json.battles || json.data || [];
+    } catch (e) {
+      console.error('Battle fetch error:', e);
     }
-  };
 
-  const [articleRoutes, battleRoutes, newsRoutes] = await Promise.all([
-    fetchDynamicRoutes(API_ENDPOINTS.ARTICLES.LIST, '/articles'),
-    fetchDynamicRoutes(API_ENDPOINTS.BATTLES.LIST, '/battles'),
-    fetchDynamicRoutes(API_ENDPOINTS.NEWS.LIST, '/news'),
-  ]);
+    try {
+      const res = await fetch(`${API_BASE}${API_ENDPOINTS.ARTICLES.LIST}`, { cache: 'no-store' });
+      const json = await res.json();
+      articles = Array.isArray(json) ? json : json.articles || json.data || [];
+    } catch (e) {
+      console.error('Article fetch error:', e);
+    }
 
-  return [...staticRoutes, ...articleRoutes, ...battleRoutes, ...newsRoutes];
+    try {
+      const res = await fetch(`${API_BASE}${API_ENDPOINTS.NEWS.LIST}`, { cache: 'no-store' });
+      const json = await res.json();
+      news = Array.isArray(json) ? json : json.news || json.data || [];
+    } catch (e) {
+      console.error('News fetch error:', e);
+    }
+
+    const battleRoutes: MetadataRoute.Sitemap = battles.map((item: any) => ({
+      url: `${BASE_URL}/battles/${item.slug || item._id}`,
+      lastModified: new Date(item.updatedAt || Date.now()).toISOString(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+
+    const articleRoutes: MetadataRoute.Sitemap = articles.map((item: any) => ({
+      url: `${BASE_URL}/articles/${item.slug || item._id}`,
+      lastModified: new Date(item.updatedAt || Date.now()).toISOString(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+
+    const newsRoutes: MetadataRoute.Sitemap = news.map((item: any) => {
+      let slug = item.slug || item._id;
+      if (item.title && !item.slug) {
+        slug = item.title
+          .toString()
+          .toLowerCase()
+          .trim()
+          .replace(/['"]/g, '')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-');
+      }
+      return {
+        url: `${BASE_URL}/news/${slug}`,
+        lastModified: new Date(item.updatedAt || Date.now()).toISOString(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      };
+    });
+
+    return [...staticRoutes, ...battleRoutes, ...articleRoutes, ...newsRoutes];
+  } catch (error) {
+    console.error('Critical Sitemap Error:', error);
+    return staticRoutes;
+  }
 }
