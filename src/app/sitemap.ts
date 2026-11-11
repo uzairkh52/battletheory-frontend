@@ -1,8 +1,10 @@
 import { MetadataRoute } from 'next';
-import { API_ENDPOINTS } from '@/constants/apiEndpoints';
+
+export const dynamic = 'force-dynamic'; // Force dynamic generation so it fetches fresh data on every request
 
 const BASE_URL = 'https://battletheory.net';
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
+// Direct hardcoded API URL use kar rahe hain taake env variable miss hone ka koi chance na rahe
+const API_BASE = 'https://api.battletheory.net/api';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -19,52 +21,58 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   try {
-    console.log('Fetching from API_BASE:', API_BASE);
-    
-    // Let's fetch them one by one with explicit error logging
     let battles: any[] = [];
     let articles: any[] = [];
     let news: any[] = [];
 
+    // Fetch Battles
     try {
-      const res = await fetch(`${API_BASE}${API_ENDPOINTS.BATTLES.LIST}`, { cache: 'no-store' });
-      const json = await res.json();
-      battles = Array.isArray(json) ? json : json.battles || json.data || [];
+      const res = await fetch(`${API_BASE}/battles`, { cache: 'no-store' });
+      if (res.ok) {
+        const json = await res.json();
+        battles = Array.isArray(json) ? json : json.battles || json.data || [];
+      }
     } catch (e) {
-      console.error('Battle fetch error:', e);
+      console.error('Sitemap battle fetch error:', e);
     }
 
+    // Fetch Articles
     try {
-      const res = await fetch(`${API_BASE}${API_ENDPOINTS.ARTICLES.LIST}`, { cache: 'no-store' });
-      const json = await res.json();
-      articles = Array.isArray(json) ? json : json.articles || json.data || [];
+      const res = await fetch(`${API_BASE}/articles`, { cache: 'no-store' });
+      if (res.ok) {
+        const json = await res.json();
+        articles = Array.isArray(json) ? json : json.articles || json.data || [];
+      }
     } catch (e) {
-      console.error('Article fetch error:', e);
+      console.error('Sitemap article fetch error:', e);
     }
 
+    // Fetch News
     try {
-      const res = await fetch(`${API_BASE}${API_ENDPOINTS.NEWS.LIST}`, { cache: 'no-store' });
-      const json = await res.json();
-      news = Array.isArray(json) ? json : json.news || json.data || [];
+      const res = await fetch(`${API_BASE}/news`, { cache: 'no-store' });
+      if (res.ok) {
+        const json = await res.json();
+        news = Array.isArray(json) ? json : json.news || json.data || [];
+      }
     } catch (e) {
-      console.error('News fetch error:', e);
+      console.error('Sitemap news fetch error:', e);
     }
 
-    const battleRoutes: MetadataRoute.Sitemap = battles.map((item: any) => ({
+    const battleUrls: MetadataRoute.Sitemap = battles.map((item: any) => ({
       url: `${BASE_URL}/battles/${item.slug || item._id}`,
       lastModified: new Date(item.updatedAt || Date.now()).toISOString(),
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
 
-    const articleRoutes: MetadataRoute.Sitemap = articles.map((item: any) => ({
+    const articleUrls: MetadataRoute.Sitemap = articles.map((item: any) => ({
       url: `${BASE_URL}/articles/${item.slug || item._id}`,
       lastModified: new Date(item.updatedAt || Date.now()).toISOString(),
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
 
-    const newsRoutes: MetadataRoute.Sitemap = news.map((item: any) => {
+    const newsUrls: MetadataRoute.Sitemap = news.map((item: any) => {
       let slug = item.slug || item._id;
       if (item.title && !item.slug) {
         slug = item.title
@@ -83,9 +91,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       };
     });
 
-    return [...staticRoutes, ...battleRoutes, ...articleRoutes, ...newsRoutes];
+    return [...staticRoutes, ...battleUrls, ...articleUrls, ...newsUrls];
   } catch (error) {
-    console.error('Critical Sitemap Error:', error);
+    console.error('Sitemap generation critical error:', error);
     return staticRoutes;
   }
 }
