@@ -24,6 +24,27 @@ async function getArticle(slug: string) {
   return null;
 }
 
+// Helper function to ensure absolute image URL for Social Crawlers
+function getAbsoluteImageUrl(article: any): string {
+  const rawImg = article?.featuredImage || article?.imageUrl || article?.image;
+  
+  if (!rawImg || typeof rawImg !== 'string' || rawImg.trim() === '') {
+    return `${SITE_URL}/og-image.jpg`;
+  }
+
+  // Agar already full URL hai toh wahi return karo
+  if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
+    return rawImg;
+  }
+
+  // Agar relative path hai toh SITE_URL ke sath safely join karo
+  if (rawImg.startsWith('/')) {
+    return `${SITE_URL}${rawImg}`;
+  }
+
+  return `${SITE_URL}/${rawImg}`;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticle(slug);
@@ -36,7 +57,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = rawDescription
       ? rawDescription.slice(0, 157).trim() + (rawDescription.length > 157 ? '...' : '')
       : `Declassified tactical research essay on ${title} by Battle Theory.`;
-    const imageUrl = article.featuredImage || article.imageUrl || article.image || `${SITE_URL}/og-image.jpg`;
+    
+    // Absolute Image URL builder call
+    const imageUrl = getAbsoluteImageUrl(article);
 
     return {
       title: `${title} | Battle Theory`,
@@ -79,6 +102,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ArticleDetailPage({ params }: Props) {
   const { slug } = await params;
   const initialArticle = await getArticle(slug);
+  const articleImageUrl = getAbsoluteImageUrl(initialArticle);
 
   // Google Rich Snippets / Discover ranking ke liye JSON-LD Schema
   const jsonLd = initialArticle
@@ -87,12 +111,7 @@ export default async function ArticleDetailPage({ params }: Props) {
         '@type': 'NewsArticle',
         headline: initialArticle.title,
         description: initialArticle.summary || initialArticle.content?.replace(/<[^>]*>/g, '').slice(0, 160),
-        image: [
-          initialArticle.featuredImage ||
-          initialArticle.imageUrl ||
-          initialArticle.image ||
-          `${SITE_URL}/og-image.jpg`,
-        ],
+        image: [articleImageUrl],
         datePublished: initialArticle.createdAt,
         dateModified: initialArticle.updatedAt || initialArticle.createdAt,
         author: {
