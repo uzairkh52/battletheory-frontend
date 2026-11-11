@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.scss";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
@@ -59,6 +60,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Google Analytics Tracking - BattleTheory */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-RPZ1F7N6Q4"
+        />
+        <Script id="google-analytics">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-RPZ1F7N6Q4');
+          `}
+        </Script>
+      </head>
       <body className="bg-[#0b0f19] text-gray-100 min-h-screen flex flex-col">
         <Providers>
           <Navbar />
