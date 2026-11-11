@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
@@ -81,7 +82,6 @@ function NavbarContent() {
     setMounted(true);
   }, []);
 
-  // Route badalne par side drawer close ho jaye
   useEffect(() => {
     setDrawerOpen(false);
     setMobileSearchOpen(false);
@@ -126,12 +126,19 @@ function NavbarContent() {
 
   return (
     <>
-      <nav className="flex justify-between items-center py-4 px-4 md:px-6 bg-[#0b0f19] border-b border-gray-800/80 relative z-40 font-mono">
-        {/* Left Side: Brand & Desktop Links */}
+      <nav className="flex justify-between items-center py-3 px-4 md:px-6 bg-[#0b0f19] border-b border-gray-800/80 relative z-40 font-mono">
+        {/* Left Side: Brand Logo & Desktop Links */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-lg md:text-xl font-black text-amber-500 uppercase tracking-widest flex items-center gap-2">
-            BattleTheory
-          </Link>
+          <Link href="/" className="flex items-center gap-2 focus:outline-none">
+  <Image
+    src="https://i.postimg.cc/FsJRPMys/web-logo.png"
+    alt="BattleTheory Logo"
+    width={240}
+    height={60}
+    className="h-10 md:h-14 w-auto object-contain"
+    priority
+  />
+</Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6 text-xs uppercase tracking-wider font-bold">

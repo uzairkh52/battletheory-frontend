@@ -4,12 +4,18 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   typescript: {
-    // Ignore TypeScript errors during production builds
     ignoreBuildErrors: true,
   },
   eslint: {
-    // Ignore ESLint errors during production builds
     ignoreDuringBuilds: true,
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**', // Sabhi external domains allow karne ke liye
+      },
+    ],
   },
 };
 

@@ -1,14 +1,21 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#111827] border-t border-gray-800 text-gray-400 mt-20">
+    <footer className="bg-[#111827] border-t border-gray-800 text-gray-400 mt-20 font-mono">
       <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="space-y-3 md:col-span-2">
-          <span className="text-xl font-black text-amber-500 uppercase tracking-wider">
-            Battle Theory
-          </span>
-          <p className="text-xs leading-relaxed max-w-sm text-gray-400">
+          <Link href="/" className="inline-block focus:outline-none">
+            <Image
+  src="https://i.postimg.cc/FsJRPMys/web-logo.png"
+  alt="Battle Theory Logo"
+  width={240}
+  height={60}
+  className="h-12 md:h-16 w-auto object-contain"
+/>
+          </Link>
+          <p className="text-xs leading-relaxed max-w-sm text-gray-400 font-sans">
             High-precision military analysis, tactical history breakdowns, and modern defense tech intelligence platform.
           </p>
         </div>
