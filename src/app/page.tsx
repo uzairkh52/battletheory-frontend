@@ -16,13 +16,13 @@ import '@/styles/slider.scss';
 
 const SITE_URL = 'https://www.battletheory.net';
 const YOUTUBE_URL = 'https://www.youtube.com/channel/UCKGJjeciArs_N-1jbUGtMrg';
+const FACEBOOK_URL = 'https://www.facebook.com/BattleTheory39';
 
 const FALLBACK_BATTLE_IMG =
   'https://images.unsplash.com/photo-1579965101323-8832a84a6b57?w=600&auto=format&fit=crop&q=60';
 const FALLBACK_ARTICLE_IMG =
   'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=600&auto=format&fit=crop&q=60';
 
-// NOTE: make sure /battles reads the ?era= query param, otherwise these just open the full archive.
 const ERAS = [
   { label: 'World War I', years: '1914–1918', slug: 'ww1' },
   { label: 'World War II', years: '1939–1945', slug: 'ww2' },
@@ -70,8 +70,6 @@ export default function Home() {
     dispatch(fetchNewsList());
   }, [dispatch]);
 
-  // TODO: this only changes local state. Connect it to your newsletter API/provider
-  // (Mailchimp, Brevo, Resend, or your own endpoint) or no email is actually saved.
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
@@ -80,7 +78,6 @@ export default function Home() {
     }
   };
 
-  // Hero feature: first battle that has a real image
   const hasImage = (b: any) => typeof b.featuredImage === 'string' && b.featuredImage.trim() !== '';
   const featured =
     battles.find((b: any) => b.featured && hasImage(b)) ||
@@ -93,7 +90,6 @@ export default function Home() {
       ? featured.featuredImage
       : FALLBACK_BATTLE_IMG;
 
-  // Real numbers only. A stat is hidden until its count is above zero.
   const stats = [
     { value: battles.length, label: 'Battles mapped' },
     { value: articles.length, label: 'Field reports' },
@@ -119,7 +115,7 @@ export default function Home() {
         url: SITE_URL,
         logo: 'https://i.postimg.cc/FsJRPMys/web-logo.png',
         sameAs: [
-          'https://www.facebook.com/BattleTheory39',
+          FACEBOOK_URL,
           'https://www.instagram.com/BattleTheory39',
           YOUTUBE_URL,
         ],
@@ -165,7 +161,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Featured battle visual */}
             {featured && (
               <Link
                 href={featuredLink}
@@ -357,7 +352,7 @@ export default function Home() {
         </section>
       </div>
 
-      {/* 5. Field reports & articles (dark theme) */}
+      {/* 5. Field reports & articles */}
       <div className="max-w-6xl mx-auto px-4">
         <section className="space-y-6 bg-[#0b1220] border border-gray-800 p-6 md:p-8 rounded-xl shadow-xl">
           <div className="flex justify-between items-center border-b border-gray-800 pb-2">
@@ -430,17 +425,17 @@ export default function Home() {
         </section>
       </div>
 
-      {/* 6. YouTube + About (replaces the fake Command Feed comments) */}
+      {/* 6. About + YouTube + Facebook Community 60k+ */}
       <div className="max-w-6xl mx-auto px-4">
-        <section className="grid md:grid-cols-2 gap-6">
-          <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-8 space-y-3">
-            <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">About Battle Theory</h2>
-            <p className="text-gray-300 text-sm font-sans leading-relaxed">
-              Battle Theory tells stories from military history, with a focus on World War II: legendary battles,
-              forgotten heroes, military technology, secret missions, and the commanders and strategies that
-              shaped them.
-            </p>
-            {/* Add 1-2 lines here about who writes the content and how you source it. Readers and Google trust named authors. */}
+        <section className="grid md:grid-cols-3 gap-6">
+          <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-8 space-y-3 flex flex-col justify-between">
+            <div className="space-y-3">
+              <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">About Battle Theory</h2>
+              <p className="text-gray-300 text-sm font-sans leading-relaxed">
+                Battle Theory tells stories from military history, with a focus on World War II: legendary battles,
+                forgotten heroes, military technology, secret missions, and the commanders and strategies that shaped them.
+              </p>
+            </div>
           </div>
 
           <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-8 space-y-3 flex flex-col justify-between">
@@ -457,6 +452,30 @@ export default function Home() {
               className="self-start bg-amber-600 hover:bg-amber-500 text-black font-black px-6 py-3 rounded text-xs uppercase tracking-widest transition-all"
             >
               Open channel →
+            </a>
+          </div>
+
+          {/* Facebook Community 60k+ Card */}
+          <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-8 space-y-3 flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/10 rounded-full blur-xl pointer-events-none" />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">Facebook Community</h2>
+                <span className="text-[10px] bg-blue-500/20 text-blue-400 font-bold px-2 py-0.5 rounded border border-blue-500/30">
+                  60K+ FOLLOWERS
+                </span>
+              </div>
+              <p className="text-gray-300 text-sm font-sans leading-relaxed">
+                Join our active community of military history enthusiasts, veterans, and researchers for daily tactical briefings.
+              </p>
+            </div>
+            <a
+              href={FACEBOOK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="self-start bg-blue-600 hover:bg-blue-500 text-white font-black px-6 py-3 rounded text-xs uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20"
+            >
+              Join Community →
             </a>
           </div>
         </section>
