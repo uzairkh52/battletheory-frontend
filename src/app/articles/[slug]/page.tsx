@@ -6,14 +6,12 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
 const SITE_URL = 'https://battletheory.net';
 
 async function getArticle(slug: string) {
   try {
     let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
     
-    // Agar environment variable mein aakhir mein /api nahi hai, toh automatically add kar lo
     if (!baseUrl.endsWith('/api') && !baseUrl.endsWith('/api/')) {
       baseUrl = `${baseUrl}/api`;
     }
@@ -61,7 +59,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (article && article.title) {
     const title = article.title;
-    // Clean description fallback taake raw breadcrumb text card mein na aaye
     const description = article.summary || article.excerpt || "Read the full declassified tactical briefing and military history analysis on Battle Theory.";
     const imageUrl = getAbsoluteImageUrl(article);
 
@@ -109,13 +106,13 @@ export default async function ArticleDetailPage({ params }: Props) {
   const initialArticle = slug ? await getArticle(slug) : null;
   const articleImageUrl = getAbsoluteImageUrl(initialArticle);
 
-  // Google Rich Snippets / Discover ranking ke liye JSON-LD Schema
+  // Lightweight JSON-LD Schema to keep payload small for social crawlers (LinkedIn/FB)
   const jsonLd = initialArticle
     ? {
         '@context': 'https://schema.org',
         '@type': 'NewsArticle',
         headline: initialArticle.title,
-        description: initialArticle.summary || initialArticle.content?.replace(/<[^>]*>/g, '').slice(0, 160),
+        description: initialArticle.summary || "Military history tactical briefing on Battle Theory.",
         image: [articleImageUrl],
         datePublished: initialArticle.createdAt,
         dateModified: initialArticle.updatedAt || initialArticle.createdAt,
