@@ -80,11 +80,8 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/fav-icon-180.png" sizes="180x180" type="image/png" />
 
         {/* Google AdSense Verification Script */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1624182310549814"
-          crossOrigin="anonymous"
-        />
+        
+        <meta name="google-adsense-account" content="ca-pub-1624182310549814"></meta>
 
         {/* Google Tag Manager (GTM) */}
         <Script
