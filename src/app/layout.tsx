@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.scss";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
@@ -80,7 +81,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/fav-icon-180.png" sizes="180x180" type="image/png" />
 
         {/* Google AdSense Verification Script */}
-        
         <meta name="google-adsense-account" content="ca-pub-1624182310549814"></meta>
 
         {/* Google Tag Manager (GTM) */}
@@ -130,6 +130,9 @@ export default function RootLayout({
           <main className="flex-1 w-full">{children}</main>
           <Footer />
         </Providers>
+
+        {/* Vercel Web Analytics Component */}
+        <Analytics />
       </body>
     </html>
   );
