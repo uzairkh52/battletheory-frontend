@@ -61,11 +61,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (article && article.title) {
     const title = article.title;
-    const description = ""; // Description blank taake social preview mein show na ho
+    // Clean description fallback taake raw breadcrumb text card mein na aaye
+    const description = article.summary || article.excerpt || "Read the full declassified tactical briefing and military history analysis on Battle Theory.";
     const imageUrl = getAbsoluteImageUrl(article);
 
     return {
-      title: title, // <--- Yahan sirf title dein, layout template khud "| Battle Theory" jor dega
+      title: title, 
       description,
       alternates: {
         canonical: articleUrl,
