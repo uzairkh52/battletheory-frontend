@@ -17,7 +17,12 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
   const article = storeArticle || initialArticle;
 
   const { user } = useAppSelector((state) => state.auth);
-  const isAdmin = Boolean(user?.isAdmin || user?.role === 'admin');
+  // 🌟 Hydration mismatch fix karne ke liye state use ki hai
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    setIsAdmin(Boolean(user?.isAdmin || user?.role === 'admin'));
+  }, [user]);
 
   const [showAllTags, setShowAllTags] = useState(false);
 

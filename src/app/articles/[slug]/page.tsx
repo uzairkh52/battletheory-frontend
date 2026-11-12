@@ -6,17 +6,17 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// Production Backend Domain (Agar env missing bhi ho toh yeh production base use karega)
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
 const SITE_URL = 'https://battletheory.net';
 
 async function getArticle(slug: string) {
   try {
-    const res = await fetch(`${API_BASE}/articles/slug/${slug}`, {
-      next: { revalidate: 60 },
+    const res = await fetch(`${API_BASE}/articles/${slug}`, {
+      cache: 'no-store',
     });
     if (res.ok) {
-      return await res.json();
+      const json = await res.json();
+      return json?.article || json?.data || json;
     }
   } catch (error) {
     console.error('Error fetching article:', error);
@@ -32,12 +32,10 @@ function getAbsoluteImageUrl(article: any): string {
     return `${SITE_URL}/og-image.jpg`;
   }
 
-  // Agar already full URL hai toh wahi return karo
   if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
     return rawImg;
   }
 
-  // Agar relative path hai toh SITE_URL ke sath safely join karo
   if (rawImg.startsWith('/')) {
     return `${SITE_URL}${rawImg}`;
   }
@@ -46,23 +44,18 @@ function getAbsoluteImageUrl(article: any): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
-  const article = await getArticle(slug);
-  const articleUrl = `${SITE_URL}/articles/${slug}`;
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug;
+  const article = slug ? await getArticle(slug) : null;
+  const articleUrl = `${SITE_URL}/articles/${slug || ''}`;
 
-  if (article) {
-    const title = article.title || 'Strategic Research Briefing';
-    const cleanContent = article.content ? article.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() : '';
-    const rawDescription = article.summary?.trim() || cleanContent;
-    const description = rawDescription
-      ? rawDescription.slice(0, 157).trim() + (rawDescription.length > 157 ? '...' : '')
-      : `Declassified tactical research essay on ${title} by Battle Theory.`;
-    
-    // Absolute Image URL builder call
+  if (article && article.title) {
+    const title = article.title;
+    const description = ""; // Description blank taake social preview mein show na ho
     const imageUrl = getAbsoluteImageUrl(article);
 
     return {
-      title: `${title} | Battle Theory`,
+      title: title, // <--- Yahan sirf title dein, layout template khud "| Battle Theory" jor dega
       description,
       alternates: {
         canonical: articleUrl,
@@ -94,14 +87,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: 'Strategic Briefing Dossier | Battle Theory',
-    description: 'Declassified tactical essays, weapon systems breakdowns, and strategic research logs.',
+    title: 'Strategic Briefing Dossier',
+    description: '',
   };
 }
 
 export default async function ArticleDetailPage({ params }: Props) {
-  const { slug } = await params;
-  const initialArticle = await getArticle(slug);
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug;
+  const initialArticle = slug ? await getArticle(slug) : null;
   const articleImageUrl = getAbsoluteImageUrl(initialArticle);
 
   // Google Rich Snippets / Discover ranking ke liye JSON-LD Schema
