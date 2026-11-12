@@ -11,15 +11,25 @@ const SITE_URL = 'https://battletheory.net';
 
 async function getArticle(slug: string) {
   try {
-    const res = await fetch(`${API_BASE}/articles/${slug}`, {
+    let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
+    
+    // Agar environment variable mein aakhir mein /api nahi hai, toh automatically add kar lo
+    if (!baseUrl.endsWith('/api') && !baseUrl.endsWith('/api/')) {
+      baseUrl = `${baseUrl}/api`;
+    }
+
+    const res = await fetch(`${baseUrl}/articles/${slug}`, {
       cache: 'no-store',
     });
+    
     if (res.ok) {
       const json = await res.json();
       return json?.article || json?.data || json;
+    } else {
+      console.error(`API Failed with status ${res.status} for URL: ${baseUrl}/articles/${slug}`);
     }
   } catch (error) {
-    console.error('Error fetching article:', error);
+    console.error('Error fetching article server-side:', error);
   }
   return null;
 }
