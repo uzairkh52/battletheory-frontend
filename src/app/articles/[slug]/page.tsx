@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import ArticleDetailClient from '@/components/website/ArticleDetailClient';
 import styles from "@/styles/component/article/ArticleDetail.module.scss";
 
@@ -6,68 +8,57 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const SITE_URL = 'https://battletheory.net';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://battletheory.net';
 
-async function getArticle(slug: string) {
+// React cache(): metadata aur page dono mein ek hi request chalegi
+const getArticle = cache(async (slug: string) => {
   try {
-    let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
-    
-    if (!baseUrl.endsWith('/api') && !baseUrl.endsWith('/api/')) {
-      baseUrl = `${baseUrl}/api`;
-    }
+    let baseUrl = process.env.NEXT_PUBLIC_API_URL || `${SITE_URL}/api`;
+    baseUrl = baseUrl.replace(/\/+$/, '');
+    if (!baseUrl.endsWith('/api')) baseUrl = `${baseUrl}/api`;
 
-    const res = await fetch(`${baseUrl}/articles/${slug}`, {
-      cache: 'no-store',
+    const res = await fetch(`${baseUrl}/articles/${encodeURIComponent(slug)}`, {
+      next: { revalidate: 60 }, // 'no-store' ki jagah ISR
     });
-    
+
     if (res.ok) {
       const json = await res.json();
       return json?.article || json?.data || json;
-    } else {
-      console.error(`API Failed with status ${res.status} for URL: ${baseUrl}/articles/${slug}`);
     }
+    console.error(`API failed ${res.status} for ${baseUrl}/articles/${slug}`);
   } catch (error) {
     console.error('Error fetching article server-side:', error);
   }
   return null;
-}
+});
 
-// Helper function to ensure absolute image URL for Social Crawlers
 function getAbsoluteImageUrl(article: any): string {
   const rawImg = article?.featuredImage || article?.imageUrl || article?.image;
-  
+
   if (!rawImg || typeof rawImg !== 'string' || rawImg.trim() === '') {
     return `${SITE_URL}/og-image.jpg`;
   }
-
-  if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
-    return rawImg;
-  }
-
-  if (rawImg.startsWith('/')) {
-    return `${SITE_URL}${rawImg}`;
-  }
-
-  return `${SITE_URL}/${rawImg}`;
+  if (/^https?:\/\//.test(rawImg)) return rawImg;
+  return rawImg.startsWith('/') ? `${SITE_URL}${rawImg}` : `${SITE_URL}/${rawImg}`;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params;
-  const slug = resolvedParams?.slug;
+  const { slug } = await params;
   const article = slug ? await getArticle(slug) : null;
   const articleUrl = `${SITE_URL}/articles/${slug || ''}`;
 
-  if (article && article.title) {
+  if (article?.title) {
     const title = article.title;
-    const description = article.summary || article.excerpt || "Read the full declassified tactical briefing and military history analysis on Battle Theory.";
+    const description =
+      article.summary ||
+      article.excerpt ||
+      'Read the full declassified tactical briefing and military history analysis on Battle Theory.';
     const imageUrl = getAbsoluteImageUrl(article);
 
     return {
-      title: title, 
+      title,
       description,
-      alternates: {
-        canonical: articleUrl,
-      },
+      alternates: { canonical: articleUrl },
       openGraph: {
         title: `${title} | Battle Theory`,
         description,
@@ -76,14 +67,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         type: 'article',
         publishedTime: article.createdAt,
         modifiedTime: article.updatedAt || article.createdAt,
-        images: [
-          {
-            url: imageUrl,
-            width: 1200,
-            height: 630,
-            alt: title,
-          },
-        ],
+        images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
       },
       twitter: {
         card: 'summary_large_image',
@@ -96,55 +80,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: 'Strategic Briefing Dossier',
-    description: '',
+    description: 'Declassified tactical briefings and military history analysis on Battle Theory.',
+    robots: { index: false, follow: false },
   };
 }
 
 export default async function ArticleDetailPage({ params }: Props) {
-  const resolvedParams = await params;
-  const slug = resolvedParams?.slug;
+  const { slug } = await params;
   const initialArticle = slug ? await getArticle(slug) : null;
+
+  if (!initialArticle) notFound(); // proper 404 status
+
   const articleImageUrl = getAbsoluteImageUrl(initialArticle);
 
-  // Lightweight JSON-LD Schema to keep payload small for social crawlers (LinkedIn/FB)
-  const jsonLd = initialArticle
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'NewsArticle',
-        headline: initialArticle.title,
-        description: initialArticle.summary || "Military history tactical briefing on Battle Theory.",
-        image: [articleImageUrl],
-        datePublished: initialArticle.createdAt,
-        dateModified: initialArticle.updatedAt || initialArticle.createdAt,
-        author: {
-          '@type': 'Person',
-          name: initialArticle.authorName || 'Muhammad Uzair',
-          url: SITE_URL,
-        },
-        publisher: {
-          '@type': 'Organization',
-          name: 'Battle Theory',
-          url: SITE_URL,
-          logo: {
-            '@type': 'ImageObject',
-            url: `${SITE_URL}/logo.png`,
-          },
-        },
-        mainEntityOfPage: {
-          '@type': 'WebPage',
-          '@id': `${SITE_URL}/articles/${slug}`,
-        },
-      }
-    : null;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: initialArticle.title,
+    description: initialArticle.summary || 'Military history tactical briefing on Battle Theory.',
+    image: [articleImageUrl],
+    datePublished: initialArticle.createdAt,
+    dateModified: initialArticle.updatedAt || initialArticle.createdAt,
+    author: {
+      '@type': 'Person',
+      name: initialArticle.authorName || 'Muhammad Uzair',
+      url: SITE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Battle Theory',
+      url: SITE_URL,
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${SITE_URL}/articles/${slug}`,
+    },
+  };
 
   return (
     <div className={styles.articleContainer}>
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          // '<' escape karna zaroori hai warna </script> injection ho sakti hai
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       <ArticleDetailClient slug={slug} initialArticle={initialArticle} />
     </div>
   );
