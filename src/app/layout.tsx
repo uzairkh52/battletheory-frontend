@@ -79,6 +79,13 @@ export default function RootLayout({
         <link rel="icon" href="/fav-icon-512.png" sizes="512x512" type="image/png" />
         <link rel="apple-touch-icon" href="/fav-icon-180.png" sizes="180x180" type="image/png" />
 
+        {/* Google AdSense Verification Script */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1624182310549814"
+          crossOrigin="anonymous"
+        />
+
         {/* Google Tag Manager (GTM) */}
         <Script
           id="google-tag-manager"
