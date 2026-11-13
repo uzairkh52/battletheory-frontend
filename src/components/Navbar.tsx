@@ -24,6 +24,11 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
     </svg>
   ),
+  About: () => (
+    <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
   Bookmarks: () => (
     <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -76,6 +81,7 @@ function NavbarContent() {
     { name: 'Battles', path: '/battles', icon: Icons.Battle },
     { name: 'Articles', path: '/articles', icon: Icons.Articles },
     { name: 'Defense News', path: '/news', icon: Icons.News },
+    { name: 'About', path: '/about', icon: Icons.About },
   ];
 
   useEffect(() => {
@@ -130,15 +136,15 @@ function NavbarContent() {
         {/* Left Side: Brand Logo & Desktop Links */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 focus:outline-none">
-  <Image
-    src="https://i.postimg.cc/FsJRPMys/web-logo.png"
-    alt="BattleTheory Logo"
-    width={240}
-    height={60}
-    className="h-10 md:h-14 w-auto object-contain"
-    priority
-  />
-</Link>
+            <Image
+              src="https://i.postimg.cc/FsJRPMys/web-logo.png"
+              alt="BattleTheory Logo"
+              width={240}
+              height={60}
+              className="h-10 md:h-14 w-auto object-contain"
+              priority
+            />
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6 text-xs uppercase tracking-wider font-bold">

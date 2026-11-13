@@ -103,7 +103,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     dateModified: initialArticle.updatedAt || initialArticle.createdAt,
     author: {
       '@type': 'Person',
-      name: initialArticle.authorName || 'Muhammad Uzair',
+      name: initialArticle.authorName || 'Uzair',
       url: SITE_URL,
     },
     publisher: {

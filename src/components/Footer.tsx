@@ -8,12 +8,12 @@ export default function Footer() {
         <div className="space-y-3 md:col-span-2">
           <Link href="/" className="inline-block focus:outline-none">
             <Image
-  src="https://i.postimg.cc/FsJRPMys/web-logo.png"
-  alt="Battle Theory Logo"
-  width={240}
-  height={60}
-  className="h-12 md:h-16 w-auto object-contain"
-/>
+              src="https://i.postimg.cc/FsJRPMys/web-logo.png"
+              alt="Battle Theory Logo"
+              width={240}
+              height={60}
+              className="h-12 md:h-16 w-auto object-contain"
+            />
           </Link>
           <p className="text-xs leading-relaxed max-w-sm text-gray-400 font-sans">
             High-precision military analysis, tactical history breakdowns, and modern defense tech intelligence platform.
@@ -26,6 +26,7 @@ export default function Footer() {
             <li><Link href="/battles" className="hover:text-amber-500 transition-colors">Battle Maps</Link></li>
             <li><Link href="/articles" className="hover:text-amber-500 transition-colors">Field Intelligence</Link></li>
             <li><Link href="/news" className="hover:text-amber-500 transition-colors">Defense Tech AI</Link></li>
+            <li><Link href="/about" className="hover:text-amber-500 transition-colors">About Battle Theory</Link></li>
           </ul>
         </div>
 
