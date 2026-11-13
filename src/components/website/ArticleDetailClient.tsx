@@ -70,6 +70,16 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
   return (
     <article className={`${styles.articleContainer} max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono relative`}>
       
+      {/* Back to Strategic Dossiers Button */}
+      <div>
+        <Link
+          href="/articles"
+          className="inline-flex items-center gap-2 text-xs text-amber-500 hover:text-amber-400 font-bold uppercase tracking-wider transition-colors"
+        >
+          <span>←</span> Back to Strategic Dossiers
+        </Link>
+      </div>
+
       {isAdmin && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between shadow-lg backdrop-blur-sm sticky top-4 z-40">
           <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase">
