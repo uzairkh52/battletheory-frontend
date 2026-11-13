@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAllArticles } from '@/store/slices/articleSlice';
@@ -42,6 +42,9 @@ const stripHtml = (html: string) => {
     .trim();
 };
 
+const hasImage = (b: any) =>
+  typeof b?.featuredImage === 'string' && b.featuredImage.trim() !== '';
+
 export default function Home() {
   const dispatch = useAppDispatch();
 
@@ -78,23 +81,30 @@ export default function Home() {
     }
   };
 
-  const hasImage = (b: any) => typeof b.featuredImage === 'string' && b.featuredImage.trim() !== '';
-  const featured =
-    battles.find((b: any) => b.featured && hasImage(b)) ||
-    battles.find((b: any) => hasImage(b) && !/prisoner/i.test(b.theater || '')) ||
-    battles.find(hasImage) ||
-    battles[0];
-  const featuredLink = featured ? `/battles/${featured.slug || featured._id}` : '/battles';
-  const featuredImg =
-    featured && typeof featured.featuredImage === 'string' && featured.featuredImage.trim() !== ''
-      ? featured.featuredImage
-      : FALLBACK_BATTLE_IMG;
+  // Hero: sab se latest 3 battles (image wali). createdAt/updatedAt se sort, warna API order
+  // Hero: sab se latest battles (agar 3 se kam hon toh saari available le le ga)
+  const heroBattles = useMemo(() => {
+    const time = (b: any) => new Date(b.createdAt || b.updatedAt || 0).getTime() || 0;
+    const withImg = battles.filter(
+      (b: any) => hasImage(b) && !/prisoner/i.test(b.theater || '')
+    );
+    const hasDates = withImg.some((b: any) => time(b) > 0);
+    const sorted = hasDates ? [...withImg].sort((x: any, y: any) => time(y) - time(x)) : withImg;
+    
+    // Agar sorted 3 se kam hain, toh baaki battles ko bhi (bina image filter ke ya fallback image ke sath) shamil kar lo taake kam az kam 3 poori ho sakein
+    if (sorted.length < 3 && battles.length > 0) {
+      const remaining = battles.filter((b: any) => !sorted.includes(b));
+      return [...sorted, ...remaining].slice(0, 3);
+    }
+    
+    return sorted.slice(0, 3);
+  }, [battles]);
 
   const stats = [
-    { value: battles.length, label: 'Battles mapped' },
-    { value: articles.length, label: 'Field reports' },
-    { value: defenseNewsItems.length, label: 'Wire dispatches' },
-  ].filter((s) => s.value > 0);
+    { value: '60K+', label: 'Trusted community' },
+    { value: '✓', label: 'Well-researched & verified' },
+    { value: battles.length > 0 ? `${battles.length}` : '—', label: 'Battles mapped' },
+  ];
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -127,7 +137,7 @@ export default function Home() {
     <div className="space-y-14 py-6 font-mono w-full">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
       {/* 1. Hero */}
@@ -161,42 +171,61 @@ export default function Home() {
               </div>
             </div>
 
-            {featured && (
-              <Link
-                href={featuredLink}
-                className="md:col-span-2 group relative block rounded-lg overflow-hidden border border-gray-800 hover:border-amber-500/50 transition-colors aspect-[4/3]"
-              >
-                <img
-                  src={featuredImg}
-                  alt={featured.title || featured.name || 'Featured battle'}
-                  className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 space-y-1">
-                  <span className="text-[10px] text-amber-400 uppercase font-bold">
-                    Featured battle {featured.year ? `· ${featured.year}` : ''}
-                  </span>
-                  <p className="text-white font-black uppercase text-sm font-sans line-clamp-2">
-                    {featured.title || featured.name}
-                  </p>
-                </div>
-              </Link>
+            {/* Latest 3 battles: drag / swipe carousel */}
+            {heroBattles.length > 0 && (
+              <div className="md:col-span-2 relative rounded-lg overflow-hidden border border-gray-800 aspect-[4/3]">
+                <Swiper
+                  modules={[Autoplay, Pagination]}
+                  slidesPerView={1}
+                  grabCursor={true}
+                  simulateTouch={true}
+                  loop={heroBattles.length > 1}
+                  autoplay={{ delay: 4500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+                  pagination={{ clickable: true }}
+                  className="hero-slider h-full w-full [&_.swiper-pagination]:!bottom-3 [&_.swiper-pagination]:!text-left [&_.swiper-pagination]:!left-4 [&_.swiper-pagination]:!w-auto [&_.swiper-pagination-bullet]:!bg-gray-400 [&_.swiper-pagination-bullet-active]:!bg-amber-500"
+                >
+                  {heroBattles.map((b: any) => (
+                    <SwiperSlide key={b._id || b.slug}>
+                      <Link
+                        href={`/battles/${b.slug || b._id}`}
+                        className="group relative block w-full h-full"
+                        draggable={false}
+                      >
+                        <img
+                          src={b.featuredImage}
+                          alt={b.title || b.name || 'Battle archive'}
+                          draggable={false}
+                          className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 select-none"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-4 pb-9 space-y-1">
+                          <span className="text-[10px] text-amber-400 uppercase font-bold">
+                            Latest battle {b.year ? `· ${b.year}` : ''}
+                          </span>
+                          <p className="text-white font-black uppercase text-sm font-sans line-clamp-2">
+                            {b.title || b.name}
+                          </p>
+                        </div>
+                      </Link>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </div>
             )}
           </div>
 
-          {stats.length > 0 && (
-            <dl className="mt-8 pt-6 border-t border-gray-800 flex flex-wrap gap-x-10 gap-y-3">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-baseline gap-2">
-                  <dt className="sr-only">{s.label}</dt>
-                  <dd className="text-2xl font-black text-white font-sans">{s.value}</dd>
-                  <span className="text-[11px] text-gray-500 uppercase tracking-wider" aria-hidden>
-                    {s.label}
-                  </span>
-                </div>
-              ))}
-            </dl>
-          )}
+          <dl className="mt-8 pt-6 border-t border-gray-800 grid grid-cols-3 gap-4 md:gap-0 md:divide-x md:divide-gray-800">
+            {stats.map((s) => (
+              <div key={s.label} className="md:px-8 md:first:pl-0 flex flex-col gap-1">
+                <dd className="text-2xl md:text-4xl font-black text-amber-500 font-sans leading-none">
+                  {s.value}
+                </dd>
+                <dt className="text-[10px] md:text-[11px] text-gray-400 uppercase tracking-wider">
+                  {s.label}
+                </dt>
+              </div>
+            ))}
+          </dl>
         </section>
       </div>
 
@@ -247,10 +276,7 @@ export default function Home() {
             >
               {battles.map((b: any) => {
                 const battleLink = `/battles/${b.slug || b._id}`;
-                const thumbnail =
-                  b.featuredImage && typeof b.featuredImage === 'string' && b.featuredImage.trim() !== ''
-                    ? b.featuredImage
-                    : FALLBACK_BATTLE_IMG;
+                const thumbnail = hasImage(b) ? b.featuredImage : FALLBACK_BATTLE_IMG;
                 const cleanDesc = stripHtml(b.summary || b.description || '');
 
                 return (
@@ -455,7 +481,6 @@ export default function Home() {
             </a>
           </div>
 
-          {/* Facebook Community 60k+ Card */}
           <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-8 space-y-3 flex flex-col justify-between relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/10 rounded-full blur-xl pointer-events-none" />
             <div className="space-y-3">
