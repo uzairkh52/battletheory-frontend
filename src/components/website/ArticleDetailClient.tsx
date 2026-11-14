@@ -3,10 +3,14 @@
 import styles from "@/styles/component/article/ArticleDetail.module.scss";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchArticleBySlug } from '@/store/slices/articleSlice';
-import CommentSection from '@/components/CommentSection';
 import { Edit3, ShieldAlert } from 'lucide-react';
+
+const CommentSection = dynamic(() => import('@/components/CommentSection'), {
+  ssr: false,
+});
 
 export default function ArticleDetailClient({ slug, initialArticle }: { slug: string; initialArticle?: any }) {
   const dispatch = useAppDispatch();
@@ -14,17 +18,15 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
     (state) => state.articles
   );
 
-  const article = storeArticle || initialArticle;
-
+  const article = initialArticle || storeArticle;
   const { user } = useAppSelector((state) => state.auth);
-  // 🌟 Hydration mismatch fix karne ke liye state use ki hai
+
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showAllTags, setShowAllTags] = useState(false);
 
   useEffect(() => {
     setIsAdmin(Boolean(user?.isAdmin || user?.role === 'admin'));
   }, [user]);
-
-  const [showAllTags, setShowAllTags] = useState(false);
 
   useEffect(() => {
     if (slug && !initialArticle) {
@@ -69,8 +71,6 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
 
   return (
     <article className={`${styles.articleContainer} max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono relative`}>
-      
-      {/* Back to Strategic Dossiers Button */}
       <div>
         <Link
           href="/articles"
@@ -195,10 +195,10 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
         <h3 className="text-xs text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2 font-bold">
           DECLASSIFIED BRIEFING BODY
         </h3>
-        
-        <div 
+
+        <div
           className="prose prose-invert max-w-none text-gray-300 font-sans text-sm md:text-base leading-relaxed space-y-4 break-words overflow-hidden [word-break:break-word]"
-          dangerouslySetInnerHTML={{ __html: article.content }} 
+          dangerouslySetInnerHTML={{ __html: article.content }}
         />
       </div>
 
@@ -207,18 +207,18 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
           <h3 className="text-xs text-amber-500 uppercase tracking-widest border-b border-gray-800 pb-2 font-bold">
             TACTICAL VIDEO FOOTAGE
           </h3>
-          <div 
+          <div
             className="w-full flex justify-center [&>iframe]:w-full [&>iframe]:max-w-2xl [&>iframe]:aspect-video [&>iframe]:rounded-lg"
-            dangerouslySetInnerHTML={{ __html: article.videoEmbed }} 
+            dangerouslySetInnerHTML={{ __html: article.videoEmbed }}
           />
         </div>
       )}
 
-      <CommentSection 
-        slug={article.slug} 
-        comments={article.comments || []} 
-        submittingComment={submittingComment} 
-        type="article" 
+      <CommentSection
+        slug={article.slug}
+        comments={article.comments || []}
+        submittingComment={submittingComment}
+        type="article"
       />
     </article>
   );

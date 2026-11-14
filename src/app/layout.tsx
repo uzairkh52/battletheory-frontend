@@ -130,9 +130,6 @@ export default function RootLayout({
           <main className="flex-1 w-full">{children}</main>
           <Footer />
         </Providers>
-
-        {/* Vercel Web Analytics Component */}
-        <Analytics />
       </body>
     </html>
   );
