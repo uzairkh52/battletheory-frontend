@@ -1,15 +1,16 @@
 import axios from 'axios';
 
 // Dynamic Base URL Normalizer (Ensures /api is always present)
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
   if (envUrl) {
     const trimmedUrl = envUrl.replace(/\/+$/, '');
     return trimmedUrl.endsWith('/api') ? trimmedUrl : `${trimmedUrl}/api`;
   }
-  // Yahan AWS IP ki jagah apni domain wali API URL set kar di hai:
   return 'https://api.battletheory.net/api';
 };
+
+export const getApiUrl = getApiBaseUrl;
 
 const API = axios.create({
   baseURL: getApiBaseUrl(),

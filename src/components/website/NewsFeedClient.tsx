@@ -38,7 +38,7 @@ const formatDate = (raw?: string) => {
 };
 
 const getApiUrl = () => {
-  const raw = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
+  const raw = process.env.NEXT_PUBLIC_API_URL || 'https://api.battletheory.net';
   return `${raw.replace(/\/+$/, '').replace(/\/api$/, '')}/api`;
 };
 

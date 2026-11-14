@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import BattleDetailClient from '@/components/website/BattleDetailClient';
+import { getApiBaseUrl } from '@/lib/api';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -9,16 +10,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
 
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const res = await fetch(`${API_URL}/battles/slug/${slug}`, {
+    const res = await fetch(`${getApiBaseUrl()}/battles/slug/${encodeURIComponent(slug)}`, {
       next: { revalidate: 60 },
     });
 
     if (res.ok) {
       const battle = await res.json();
       const title = battle.title || battle.name || 'Classified Battle Engagement';
-      
-      // 🌟 SEO Meta description uses summary first
+
       const metaDescription =
         battle.summary ||
         battle.description?.slice(0, 160) ||

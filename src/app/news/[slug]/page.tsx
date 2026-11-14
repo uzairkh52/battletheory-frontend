@@ -1,20 +1,22 @@
 import type { Metadata } from 'next';
 import NewsDetailClient from '@/components/website/NewsDetailClient';
 import { API_ENDPOINTS } from '@/constants/apiEndpoints';
+import { getApiBaseUrl } from '@/lib/api';
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
 
   try {
-    const res = await fetch(`${BASE_URL}${API_ENDPOINTS.NEWS.DETAIL(slug)}`, {
-      next: { revalidate: 60 },
-    });
+    const res = await fetch(
+      `${getApiBaseUrl()}${API_ENDPOINTS.NEWS.DETAIL(encodeURIComponent(slug))}`,
+      {
+        next: { revalidate: 60 },
+      }
+    );
 
     if (res.ok) {
       const newsItem = await res.json();

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ArticlesClient from '@/components/website/ArticlesClient';
+import { getApiBaseUrl } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Tactical Articles Archive',
@@ -8,17 +9,9 @@ export const metadata: Metadata = {
   alternates: { canonical: '/articles' },
 };
 
-function getApiUrl() {
-  const raw =
-    process.env.NEXT_PUBLIC_API_URL ||
-    `${process.env.NEXT_PUBLIC_SITE_URL || 'https://battletheory.net'}/api`;
-  const clean = raw.replace(/\/+$/, '').replace(/\/api$/, '');
-  return `${clean}/api`;
-}
-
 async function getArticles(): Promise<{ articles: any[]; failed: boolean }> {
   try {
-    const res = await fetch(`${getApiUrl()}/articles`, { next: { revalidate: 60 } });
+    const res = await fetch(`${getApiBaseUrl()}/articles`, { next: { revalidate: 60 } });
     if (!res.ok) return { articles: [], failed: true };
     const json = await res.json();
     const list = Array.isArray(json) ? json : json?.articles || json?.data || [];

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import NewsFeedClient from '@/components/website/NewsFeedClient';
+import { getApiBaseUrl } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Defense Intelligence & Military Tech News',
@@ -17,17 +18,10 @@ export const metadata: Metadata = {
 
 const PAGE_SIZE = 20;
 
-function getApiUrl() {
-  const raw =
-    process.env.NEXT_PUBLIC_API_URL ||
-    `${process.env.NEXT_PUBLIC_SITE_URL || 'https://battletheory.net'}/api`;
-  return `${raw.replace(/\/+$/, '').replace(/\/api$/, '')}/api`;
-}
-
 // Pehla page server par: HTML mein content aata hai (SEO + fast first paint), 60s ISR cache
 async function getInitialNews(): Promise<{ news: any[]; hasMore: boolean; failed: boolean }> {
   try {
-    const res = await fetch(`${getApiUrl()}/news?page=1&limit=${PAGE_SIZE}`, {
+    const res = await fetch(`${getApiBaseUrl()}/news?page=1&limit=${PAGE_SIZE}`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return { news: [], hasMore: false, failed: true };
@@ -40,7 +34,7 @@ async function getInitialNews(): Promise<{ news: any[]; hasMore: boolean; failed
     return { news, hasMore, failed: false };
   } catch (e) {
     console.error('Error fetching news server-side:', e);
-    return { news: [], hasMore: false, failed: true };
+    return { news, hasMore: false, failed: true };
   }
 }
 

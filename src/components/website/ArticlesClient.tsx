@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Shield, ChevronRight, Search, X, Clock, RefreshCw } from 'lucide-react';
 import BookmarkButton from '@/components/website/BookmarkButton';
+import { getApiBaseUrl } from '@/lib/api';
 
 const PAGE_SIZE = 9;
 
@@ -43,11 +44,6 @@ const readingTime = (a: any): number | null => {
   const text = stripHtml(a?.content);
   if (!text) return null;
   return Math.max(1, Math.round(text.split(' ').length / 200));
-};
-
-const getApiUrl = () => {
-  const raw = process.env.NEXT_PUBLIC_API_URL || 'https://battletheory.net/api';
-  return `${raw.replace(/\/+$/, '').replace(/\/api$/, '')}/api`;
 };
 
 function Thumb({ src, alt }: { src: string; alt: string }) {
@@ -201,7 +197,7 @@ export default function ArticlesClient({
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${getApiUrl()}/articles`);
+      const res = await fetch(`${getApiBaseUrl()}/articles`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const list = Array.isArray(json) ? json : json?.articles || json?.data || [];

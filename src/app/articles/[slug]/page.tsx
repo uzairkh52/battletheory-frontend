@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import ArticleDetailClient from '@/components/website/ArticleDetailClient';
-import styles from "@/styles/component/article/ArticleDetail.module.scss";
+import { getApiBaseUrl } from '@/lib/api';
+import styles from '@/styles/component/article/ArticleDetail.module.scss';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -13,12 +14,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://battletheory.net';
 // React cache(): metadata aur page dono mein ek hi request chalegi
 const getArticle = cache(async (slug: string) => {
   try {
-    let baseUrl = process.env.NEXT_PUBLIC_API_URL || `${SITE_URL}/api`;
-    baseUrl = baseUrl.replace(/\/+$/, '');
-    if (!baseUrl.endsWith('/api')) baseUrl = `${baseUrl}/api`;
-
+    const baseUrl = getApiBaseUrl();
     const res = await fetch(`${baseUrl}/articles/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 60 }, // 'no-store' ki jagah ISR
+      next: { revalidate: 60 },
     });
 
     if (res.ok) {
@@ -89,7 +87,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const { slug } = await params;
   const initialArticle = slug ? await getArticle(slug) : null;
 
-  if (!initialArticle) notFound(); // proper 404 status
+  if (!initialArticle) notFound();
 
   const articleImageUrl = getAbsoluteImageUrl(initialArticle);
 
@@ -123,7 +121,6 @@ export default async function ArticleDetailPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          // '<' escape karna zaroori hai warna </script> injection ho sakti hai
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
         }}
       />
