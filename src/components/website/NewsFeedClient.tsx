@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Radio, ExternalLink, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
+import { useGetNewsQuery } from '@/store/api/newsApi';
 
 const PAGE_SIZE = 20;
 
@@ -30,33 +31,16 @@ const stripHtml = (html?: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// Fixed locale + UTC => server/client same output (hydration safe)
 const formatDate = (raw?: string) => {
   const d = raw ? new Date(raw) : null;
   if (!d || isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' });
 };
 
-const getApiUrl = () => {
-  const raw = process.env.NEXT_PUBLIC_API_URL || 'https://api.battletheory.net';
-  return `${raw.replace(/\/+$/, '').replace(/\/api$/, '')}/api`;
-};
-
-async function fetchPage(page: number): Promise<{ items: any[]; more: boolean }> {
-  const res = await fetch(`${getApiUrl()}/news?page=${page}&limit=${PAGE_SIZE}`);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`);
-  const items = Array.isArray(data) ? data : data.news || data.items || [];
-  const more = !Array.isArray(data) && data.hasMore !== undefined ? Boolean(data.hasMore) : items.length === PAGE_SIZE;
-  return { items, more };
-}
-
 const getImage = (item: any): string =>
-  [item?.imageUrl, item?.image, item?.thumbnail].find(
+  [item?.image, item?.imageUrl, item?.thumbnail].find(
     (v) => typeof v === 'string' && v.trim() !== ''
   ) || '';
-
-/* ---------- Image: broken / missing ho to card text-only ban jata hai (khali box nahi) ---------- */
 
 function NewsThumb({ src, alt, priority }: { src: string; alt: string; priority: boolean }) {
   const [failed, setFailed] = useState(false);
@@ -80,25 +64,22 @@ function NewsThumb({ src, alt, priority }: { src: string; alt: string; priority:
 }
 
 function NewsCard({ item, priority }: { item: any; priority: boolean }) {
-  const externalUrl: string | undefined = item.link || item.sourceUrl;
-  const href = `/news/${slugify(item.title) || item._id}`;
+  const externalUrl: string | undefined = item.sourceUrl || item.link;
+  const href = `/news/${item.slug || slugify(item.title) || item._id}`;
   const date = formatDate(item.publishedAt || item.pubDate || item.createdAt);
-  const source = item.source || 'Defense News';
+  const authorOrSource = item.author || item.source || 'BattleTheory Editorial';
   const summary = stripHtml(item.summary);
 
   return (
-    <article
-      // Off-screen cards ka rendering skip: lambi list par scroll/paint fast
-      className="group relative flex gap-4 bg-[#111827] border border-gray-800 hover:border-amber-500/40 rounded-lg p-4 transition-colors [content-visibility:auto] [contain-intrinsic-size:auto_150px]"
-    >
-      <NewsThumb src={getImage(item)} alt={item.title || 'News thumbnail'} priority={priority} />
+    <article className="group relative flex gap-4 bg-[#111827] border border-gray-800 hover:border-amber-500/40 rounded-lg p-4 transition-colors [content-visibility:auto] [contain-intrinsic-size:auto_150px]">
+      <NewsThumb src={getImage(item)} alt={item.title || 'Briefing thumbnail'} priority={priority} />
 
       <div className="order-1 sm:order-2 flex-1 min-w-0 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-wider">
           <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded font-bold">
             {item.category || 'Defense'}
           </span>
-          <span className="text-gray-400 truncate max-w-[10rem]">{source}</span>
+          <span className="text-gray-400 truncate max-w-[12rem]">{authorOrSource}</span>
           {date && <span className="text-gray-600">· {date}</span>}
         </div>
 
@@ -124,10 +105,10 @@ function NewsCard({ item, priority }: { item: any; priority: boolean }) {
               href={externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`Open original source: ${source}`}
+              aria-label={`Open reference: ${authorOrSource}`}
               className="relative z-10 inline-flex items-center gap-1 text-[10px] uppercase text-gray-500 hover:text-amber-500 transition-colors py-1"
             >
-              Source <ExternalLink className="w-3 h-3" />
+              Reference <ExternalLink className="w-3 h-3" />
             </a>
           )}
         </div>
@@ -153,66 +134,40 @@ function Skeleton() {
   );
 }
 
-/* ---------- Page ---------- */
-
 export default function NewsFeedClient({
-  initialNews,
-  initialHasMore,
-  initialFailed,
+  initialNews = [],
+  initialHasMore = false,
+  initialFailed = false,
 }: {
-  initialNews: any[];
-  initialHasMore: boolean;
-  initialFailed: boolean;
+  initialNews?: any[];
+  initialHasMore?: boolean;
+  initialFailed?: boolean;
 }) {
-  const [news, setNews] = useState<any[]>(initialNews);
-  const [hasMore, setHasMore] = useState(initialHasMore);
-  const [loading, setLoading] = useState(initialFailed);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [allNews, setAllNews] = useState<any[]>(initialNews);
   const [category, setCategory] = useState('all');
-  const pageRef = useRef(1); // sirf success par aage barhta hai
 
-  const merge = (prev: any[], incoming: any[]) => {
-    const ids = new Set(prev.map((n) => n._id));
-    return [...prev, ...incoming.filter((n) => !ids.has(n._id))];
-  };
-
-  // Server fetch fail hui ho to client par dobara try
-  const loadInitial = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { items, more } = await fetchPage(1);
-      setNews(items);
-      setHasMore(more);
-      pageRef.current = 1;
-    } catch (e: any) {
-      setError(e.message || 'Network connection failure');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data, isLoading, isFetching, error, refetch } = useGetNewsQuery({
+    page,
+    limit: PAGE_SIZE,
+  });
 
   useEffect(() => {
-    if (initialFailed) loadInitial();
-  }, [initialFailed, loadInitial]);
+    if (!data?.news) return;
+    setAllNews((prev) => {
+      if (page === 1) return data.news;
+      const ids = new Set(prev.map((n) => n._id));
+      return [...prev, ...data.news.filter((n) => !ids.has(n._id))];
+    });
+  }, [data, page]);
 
-  const loadMore = async () => {
-    if (loadingMore || !hasMore) return;
-    const next = pageRef.current + 1;
-    try {
-      setLoadingMore(true);
-      setError(null);
-      const { items, more } = await fetchPage(next);
-      setNews((prev) => merge(prev, items));
-      setHasMore(more);
-      pageRef.current = next;
-    } catch (e: any) {
-      setError(e.message || 'Failed to load more feeds');
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  const news = data?.news ? allNews : initialNews;
+  const hasMore = data ? Boolean(data.hasMore) : initialHasMore;
+  const loading = (isLoading && news.length === 0) || (initialFailed && !data && !error);
+  const errorMessage = error
+    ? ('data' in error ? (error.data as any)?.message : (error as any)?.message) ||
+      'Network connection failure'
+    : null;
 
   const categories = useMemo(() => {
     const counts = new Map<string, number>();
@@ -230,26 +185,24 @@ export default function NewsFeedClient({
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 space-y-6 font-mono text-white">
-      {/* Header */}
       <header className="relative border border-amber-500/20 bg-black/40 rounded-lg p-5 sm:p-8 overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293710_1px,transparent_1px),linear-gradient(to_bottom,#1f293710_1px,transparent_1px)] bg-[size:2rem_2rem] pointer-events-none" />
         <div className="relative space-y-3">
           <div className="inline-flex items-center gap-2 text-[10px] text-amber-500 bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20 uppercase tracking-widest">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Defense &amp; Strategic Intelligence // Live feed
+            Defense &amp; Strategic Intelligence // Editorial Dispatch
           </div>
           <h1 className="flex items-start sm:items-center gap-3 text-2xl sm:text-3xl md:text-4xl font-black uppercase tracking-wide leading-tight">
             <Radio className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500 shrink-0 mt-1 sm:mt-0" />
-            Defense &amp; Strategic Intelligence Alerts
+            Defense &amp; Strategic Intelligence Briefings
           </h1>
           <p className="font-sans text-gray-400 text-sm max-w-2xl leading-relaxed">
-            Automated tracking of autonomous systems, military AI and next-gen defense tech.
-            {news.length > 0 && ` ${news.length} dispatches loaded.`}
+            Original editorial analysis covering naval strategy, air defense, and military technology.
+            {news.length > 0 && ` ${news.length} briefings loaded.`}
           </p>
         </div>
       </header>
 
-      {/* Category filter: mobile par horizontal scroll */}
       {categories.length > 1 && (
         <div
           className="-mx-4 px-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -275,18 +228,17 @@ export default function NewsFeedClient({
         </div>
       )}
 
-      {/* List */}
       {loading ? (
         <Skeleton />
       ) : news.length === 0 ? (
         <div className="p-10 text-center border border-dashed border-gray-800 rounded-lg space-y-4">
           <p className="text-xs text-gray-500 uppercase">
-            {error ? `Alert: ${error}` : 'No active defense intelligence alerts at this moment.'}
+            {errorMessage ? `Alert: ${errorMessage}` : 'No active defense intelligence briefings at this moment.'}
           </p>
-          {error && (
+          {errorMessage && (
             <button
               type="button"
-              onClick={loadInitial}
+              onClick={() => refetch()}
               className="inline-flex items-center gap-2 border border-amber-500/40 text-amber-500 hover:bg-amber-500 hover:text-black px-4 py-2 rounded text-xs uppercase font-bold transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Retry
@@ -296,44 +248,37 @@ export default function NewsFeedClient({
       ) : (
         <div className="grid lg:grid-cols-2 gap-4">
           {filtered.map((item, i) => (
-            <NewsCard key={item._id || item.title} item={item} priority={i < 2} />
+            <NewsCard key={item._id || item.slug || item.title} item={item} priority={i < 2} />
           ))}
         </div>
       )}
 
-      {/* Load more error (list wahi rehti hai) */}
-      {error && news.length > 0 && (
+      {errorMessage && news.length > 0 && (
         <div className="flex items-center justify-between gap-3 bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded text-xs">
-          <span>Alert: {error}</span>
-          <button type="button" onClick={loadMore} className="font-bold uppercase underline shrink-0">
+          <span>Alert: {errorMessage}</span>
+          <button type="button" onClick={() => refetch()} className="font-bold uppercase underline shrink-0">
             Retry
           </button>
         </div>
       )}
 
-      {/* Load more */}
       {!loading && hasMore && (
         <div className="text-center pt-2 pb-4">
           <button
             type="button"
-            onClick={loadMore}
-            disabled={loadingMore}
+            onClick={() => setPage((p) => p + 1)}
+            disabled={isFetching}
             className="w-full sm:w-auto px-8 py-3.5 bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:bg-amber-500 hover:text-black font-black text-xs uppercase tracking-widest rounded-md transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {loadingMore ? (
+            {isFetching ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Fetching...
               </>
             ) : (
-              'Load more feeds'
+              'Load more briefings'
             )}
           </button>
-          {category !== 'all' && (
-            <p className="mt-3 text-[11px] text-gray-600">
-              Filter sirf load ho chuki dispatches par chalta hai.
-            </p>
-          )}
         </div>
       )}
     </div>

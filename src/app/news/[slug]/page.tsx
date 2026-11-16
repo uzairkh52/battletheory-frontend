@@ -1,52 +1,137 @@
-import type { Metadata } from 'next';
-import NewsDetailClient from '@/components/website/NewsDetailClient';
-import { API_ENDPOINTS } from '@/constants/apiEndpoints';
-import { getApiBaseUrl } from '@/lib/api';
+'use client';
 
-type Props = {
-  params: Promise<{ slug: string }>;
-};
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { ArrowLeft, ExternalLink, ShieldAlert, Loader2 } from 'lucide-react';
+import type { AppDispatch, RootState } from '@/store/store';
+import { fetchNewsBySlug, setSelectedNews } from '@/store/slices/newsSlice';
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+export default function NewsDetailPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+  const dispatch = useDispatch<AppDispatch>();
 
-  try {
-    const res = await fetch(
-      `${getApiBaseUrl()}${API_ENDPOINTS.NEWS.DETAIL(encodeURIComponent(slug))}`,
-      {
-        next: { revalidate: 60 },
-      }
+  const { selectedNews, detailLoading, error } = useSelector((state: RootState) => state.news);
+
+  useEffect(() => {
+    if (!slug) return;
+    dispatch(fetchNewsBySlug(slug));
+    return () => {
+      dispatch(setSelectedNews(null));
+    };
+  }, [dispatch, slug]);
+
+  if (detailLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-16 flex items-center justify-center gap-3 font-mono text-xs text-gray-400">
+        <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+        Loading briefing...
+      </div>
     );
-
-    if (res.ok) {
-      const newsItem = await res.json();
-      const title = newsItem.title || 'Defense Intelligence Alert';
-      const description =
-        newsItem.summary?.slice(0, 160) ||
-        `Automated intelligence tracking for ${title}.`;
-      const imageUrl = newsItem.image || newsItem.imageUrl || newsItem.thumbnail;
-
-      return {
-        title: `${title} | Battle Theory`,
-        description,
-        openGraph: {
-          title: `${title} | Battle Theory`,
-          description,
-          images: imageUrl ? [imageUrl] : [],
-        },
-      };
-    }
-  } catch (error) {
-    console.error('Error fetching news metadata:', error);
   }
 
-  return {
-    title: 'Defense Intelligence Alert | Battle Theory',
-    description: 'Real-time automated defense intelligence tracking.',
-  };
-}
+  if (error || !selectedNews) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4 font-mono">
+        <p className="text-sm text-red-400">{error || 'Briefing not found.'}</p>
+        <Link
+          href="/news"
+          className="inline-flex items-center gap-2 text-xs uppercase text-amber-500 hover:underline"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to News
+        </Link>
+      </div>
+    );
+  }
 
-export default async function NewsDetailPage({ params }: Props) {
-  const { slug } = await params;
-  return <NewsDetailClient slug={slug} />;
+  const image = selectedNews.image || selectedNews.imageUrl || selectedNews.thumbnail;
+  const externalUrl = selectedNews.sourceUrl || selectedNews.link;
+  const formattedDate = selectedNews.createdAt
+    ? new Date(selectedNews.createdAt).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
+    : '';
+
+  return (
+    <article className="max-w-4xl mx-auto px-4 py-6 sm:py-10 space-y-6 text-white">
+      <div>
+        <Link
+          href="/news"
+          className="inline-flex items-center gap-1.5 font-mono text-xs uppercase text-amber-500 hover:underline"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> All Briefings
+        </Link>
+      </div>
+
+      <header className="space-y-4 border-b border-gray-800 pb-6">
+        <div className="flex flex-wrap items-center gap-2.5 font-mono text-[11px] uppercase tracking-wider">
+          <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded font-bold">
+            {selectedNews.category || 'Defense'}
+          </span>
+          <span className="text-gray-400">
+            {selectedNews.author || selectedNews.source || 'BattleTheory Editorial'}
+          </span>
+          {formattedDate && <span className="text-gray-600">· {formattedDate}</span>}
+        </div>
+
+        <h1 className="font-sans text-2xl sm:text-4xl font-black leading-tight">
+          {selectedNews.title}
+        </h1>
+
+        {selectedNews.summary && (
+          <p className="font-sans text-base text-gray-300 leading-relaxed">
+            {selectedNews.summary}
+          </p>
+        )}
+      </header>
+
+      {image && (
+        <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-800 bg-gray-900">
+          <img
+            src={image}
+            alt={selectedNews.title}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      {/* Main Article Content */}
+      <div
+        className="prose prose-invert max-w-none font-sans text-gray-200 leading-relaxed space-y-4"
+        dangerouslySetInnerHTML={{ __html: selectedNews.content }}
+      />
+
+      {/* Original Tactical Analysis Box */}
+      {selectedNews.tacticalAnalysis && (
+        <section className="mt-8 rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6 space-y-2.5">
+          <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-amber-400">
+            <ShieldAlert className="w-4 h-4" />
+            BattleTheory Tactical Assessment
+          </div>
+          <p className="font-sans text-sm text-gray-200 leading-relaxed">
+            {selectedNews.tacticalAnalysis}
+          </p>
+        </section>
+      )}
+
+      {externalUrl && (
+        <div className="pt-4 border-t border-gray-800">
+          <a
+            href={externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase text-amber-500 hover:underline"
+          >
+            View Reference Source <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      )}
+    </article>
+  );
 }

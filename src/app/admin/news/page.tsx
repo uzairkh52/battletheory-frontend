@@ -11,11 +11,11 @@ export default function AdminNewsPage() {
           Defense Intelligence News Management
         </h1>
         <p className="text-xs text-gray-400 mt-1">
-          Create, edit, and sync automated defense feeds for BattleTheory.
+          Create, publish, and manage original editorial briefings for BattleTheory.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <NewsForm />
         <NewsAdminList />
       </div>

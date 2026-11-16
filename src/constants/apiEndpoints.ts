@@ -24,9 +24,8 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/articles/${id}`,
   },
   NEWS: {
-    // 🌟 Express backend `/news` ko point karne ke liye prefix add kar diya gaya hai
     LIST: '/news',
-    DETAIL: (id: string) => `/news/${id}`,
+    DETAIL: (idOrSlug: string) => `/news/${idOrSlug}`,
     CREATE: '/news',
     UPDATE: (id: string) => `/news/${id}`,
     DELETE: (id: string) => `/news/${id}`,

@@ -5,99 +5,136 @@ import { API_ENDPOINTS } from '@/constants/apiEndpoints';
 export interface NewsItem {
   _id?: string;
   title: string;
-  slug?: string;
+  slug: string;
   category: string;
-  source: string;
+  summary: string;
+  content: string;
+  tacticalAnalysis?: string;
+  image?: string;
+  imageUrl?: string;
+  thumbnail?: string;
+  author?: string;
+  source?: string;
   sourceUrl?: string;
   link?: string;
-  summary: string;
-  content?: string;
-  image?: string;      // 👈 Added
-  imageUrl?: string;   // 👈 Added
-  thumbnail?: string;  // 👈 Added
   isPublished?: boolean;
   createdAt?: string;
+  updatedAt?: string;
+}
+
+interface FetchNewsParams {
+  page?: number;
+  limit?: number;
+  category?: string;
+  all?: boolean;
+  append?: boolean;
 }
 
 interface NewsState {
   items: NewsItem[];
   selectedNews: NewsItem | null;
+  currentPage: number;
+  totalPages: number;
+  hasMore: boolean;
+  totalNews: number;
   loading: boolean;
+  detailLoading: boolean;
   creating: boolean;
   updating: boolean;
+  deleting: boolean;
   error: string | null;
 }
 
 const initialState: NewsState = {
   items: [],
   selectedNews: null,
+  currentPage: 1,
+  totalPages: 1,
+  hasMore: false,
+  totalNews: 0,
   loading: false,
+  detailLoading: false,
   creating: false,
   updating: false,
+  deleting: false,
   error: null,
 };
 
-// 1. Fetch all news
+// 1. Fetch All News (Paginated + Category Filter)
 export const fetchNewsList = createAsyncThunk(
   'news/fetchNewsList',
-  async (_, { rejectWithValue }) => {
+  async (params: FetchNewsParams = {}, { rejectWithValue }) => {
     try {
-      const response = await API.get(API_ENDPOINTS.NEWS.LIST);
-      return response.data;
+      const { page = 1, limit = 20, category, all = false } = params;
+      const response = await API.get(API_ENDPOINTS.NEWS.LIST, {
+        params: {
+          page,
+          limit,
+          ...(all ? { all: 'true' } : {}),
+          ...(category && category !== 'all' ? { category } : {}),
+        },
+      });
+      return {
+        data: response.data,
+        append: Boolean(params.append),
+      };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to fetch defense news feeds.'
+        error.response?.data?.message || 'Failed to fetch defense news briefings.'
       );
     }
   }
 );
 
-// 2. Fetch single news by Slug (Dynamic detail page)
+// 2. Fetch Single News By Slug
 export const fetchNewsBySlug = createAsyncThunk(
   'news/fetchNewsBySlug',
   async (slug: string, { rejectWithValue }) => {
     try {
       const response = await API.get(`/news/slug/${slug}`);
-      return response.data;
+      return response.data as NewsItem;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to fetch news report.'
+        error.response?.data?.message || 'Failed to fetch news briefing.'
       );
     }
   }
 );
 
-// 3. Create news record
+// 3. Create News (Admin)
 export const createNews = createAsyncThunk(
   'news/createNews',
-  async (newsData: NewsItem, { rejectWithValue }) => {
+  async (newsData: Partial<NewsItem>, { rejectWithValue }) => {
     try {
       const response = await API.post(API_ENDPOINTS.NEWS.CREATE, newsData);
-      return response.data;
+      return response.data as NewsItem;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to create news record.'
+        error.response?.data?.message || 'Failed to create news briefing.'
       );
     }
   }
 );
 
-// 4. Update news record
+// 4. Update News (Admin)
 export const updateNews = createAsyncThunk(
   'news/updateNews',
-  async ({ id, newsData }: { id: string; newsData: Partial<NewsItem> }, { rejectWithValue }) => {
+  async (
+    { id, newsData }: { id: string; newsData: Partial<NewsItem> },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await API.put(`/news/${id}`, newsData);
-      return response.data;
+      const response = await API.put(API_ENDPOINTS.NEWS.UPDATE(id), newsData);
+      return response.data as NewsItem;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to update news record.'
+        error.response?.data?.message || 'Failed to update news briefing.'
       );
     }
   }
 );
 
-// 5. Delete news record
+// 5. Delete News (Admin)
 export const deleteNews = createAsyncThunk(
   'news/deleteNews',
   async (id: string, { rejectWithValue }) => {
@@ -106,7 +143,7 @@ export const deleteNews = createAsyncThunk(
       return id;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.message || 'Failed to delete news record.'
+        error.response?.data?.message || 'Failed to delete news briefing.'
       );
     }
   }
@@ -122,6 +159,14 @@ const newsSlice = createSlice({
     clearNewsError: (state) => {
       state.error = null;
     },
+    resetNewsList: (state) => {
+      state.items = [];
+      state.currentPage = 1;
+      state.totalPages = 1;
+      state.hasMore = false;
+      state.totalNews = 0;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -132,25 +177,50 @@ const newsSlice = createSlice({
       })
       .addCase(fetchNewsList.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        const { data, append } = action.payload;
+        const incoming: NewsItem[] = Array.isArray(data) ? data : data?.news || [];
+
+        if (append) {
+          const existingIds = new Set(state.items.map((item) => item._id || item.slug));
+          const uniqueIncoming = incoming.filter(
+            (item) => !existingIds.has(item._id || item.slug)
+          );
+          state.items = [...state.items, ...uniqueIncoming];
+        } else {
+          state.items = incoming;
+        }
+
+        if (!Array.isArray(data) && data) {
+          state.currentPage = data.currentPage ?? 1;
+          state.totalPages = data.totalPages ?? 1;
+          state.hasMore = Boolean(data.hasMore);
+          state.totalNews = data.totalNews ?? state.items.length;
+        } else {
+          state.currentPage = 1;
+          state.totalPages = 1;
+          state.hasMore = false;
+          state.totalNews = state.items.length;
+        }
       })
       .addCase(fetchNewsList.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
+
       // Fetch News By Slug
       .addCase(fetchNewsBySlug.pending, (state) => {
-        state.loading = true;
+        state.detailLoading = true;
         state.error = null;
       })
       .addCase(fetchNewsBySlug.fulfilled, (state, action) => {
-        state.loading = false;
+        state.detailLoading = false;
         state.selectedNews = action.payload;
       })
       .addCase(fetchNewsBySlug.rejected, (state, action) => {
-        state.loading = false;
+        state.detailLoading = false;
         state.error = action.payload as string;
       })
+
       // Create News
       .addCase(createNews.pending, (state) => {
         state.creating = true;
@@ -159,11 +229,13 @@ const newsSlice = createSlice({
       .addCase(createNews.fulfilled, (state, action) => {
         state.creating = false;
         state.items.unshift(action.payload);
+        state.totalNews += 1;
       })
       .addCase(createNews.rejected, (state, action) => {
         state.creating = false;
         state.error = action.payload as string;
       })
+
       // Update News
       .addCase(updateNews.pending, (state) => {
         state.updating = true;
@@ -183,12 +255,23 @@ const newsSlice = createSlice({
         state.updating = false;
         state.error = action.payload as string;
       })
+
       // Delete News
+      .addCase(deleteNews.pending, (state) => {
+        state.deleting = true;
+        state.error = null;
+      })
       .addCase(deleteNews.fulfilled, (state, action) => {
+        state.deleting = false;
         state.items = state.items.filter((item) => item._id !== action.payload);
+        state.totalNews = Math.max(0, state.totalNews - 1);
+      })
+      .addCase(deleteNews.rejected, (state, action) => {
+        state.deleting = false;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const { setSelectedNews, clearNewsError } = newsSlice.actions;
+export const { setSelectedNews, clearNewsError, resetNewsList } = newsSlice.actions;
 export default newsSlice.reducer;
