@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.scss";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
@@ -8,8 +7,8 @@ import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: {
-    default: "Battle Theory | High-Performance Military Intelligence",
-    template: "%s | Battle Theory",
+    default: "BattleTheory | High-Performance Military Intelligence",
+    template: "%s | BattleTheory",
   },
   description:
     "Tactical history, battle maps, declassified archives, and modern military tech analysis.",
@@ -32,23 +31,23 @@ export const metadata: Metadata = {
     "Battle Maps",
     "World War History",
     "Defense News",
-    "Battle Theory",
+    "BattleTheory",
   ],
-  authors: [{ name: "Battle Theory Command" }],
-  creator: "Battle Theory",
+  authors: [{ name: "BattleTheory Command" }],
+  creator: "BattleTheory",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://battletheory.net"),
   openGraph: {
-    title: "Battle Theory | High-Performance Military Intelligence",
+    title: "BattleTheory | High-Performance Military Intelligence",
     description:
       "Tactical history, battle maps, declassified archives, and modern military tech analysis.",
     url: "/",
-    siteName: "Battle Theory",
+    siteName: "BattleTheory",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Battle Theory Tactical Intelligence Portal",
+        alt: "BattleTheory Tactical Intelligence Portal",
       },
     ],
     locale: "en_US",
@@ -56,7 +55,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Battle Theory | Military Intelligence & History",
+    title: "BattleTheory | Military Intelligence & History",
     description:
       "Tactical history, battle maps, and declassified defense analysis.",
     images: ["/og-image.jpg"],

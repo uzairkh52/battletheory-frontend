@@ -63,7 +63,7 @@ export default function ContactPage() {
           </h1>
 
           <p className="text-gray-400 text-xs md:text-sm max-w-2xl leading-relaxed">
-            Establish secure communication channels with Battle Theory research command, media syndication desks, or technical operations.
+            Establish secure communication channels with BattleTheory research command, media syndication desks, or technical operations.
           </p>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function ContactPage() {
               <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto animate-bounce" />
               <h3 className="text-lg font-bold uppercase text-white">Transmission Successful</h3>
               <p className="text-xs text-gray-400 max-w-md mx-auto font-sans leading-relaxed">
-                Your briefing inquiry has been securely routed to Battle Theory communications command. We will respond via secure channel shortly.
+                Your briefing inquiry has been securely routed to BattleTheory communications command. We will respond via secure channel shortly.
               </p>
               <button
                 onClick={handleReset}

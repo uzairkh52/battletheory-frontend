@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description =
       article.summary ||
       article.excerpt ||
-      'Read the full declassified tactical briefing and military history analysis on Battle Theory.';
+      'Read the full declassified tactical briefing and military history analysis on BattleTheory.';
     const imageUrl = getAbsoluteImageUrl(article);
 
     return {
@@ -58,10 +58,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       alternates: { canonical: articleUrl },
       openGraph: {
-        title: `${title} | Battle Theory`,
+        title: `${title} | BattleTheory`,
         description,
         url: articleUrl,
-        siteName: 'Battle Theory',
+        siteName: 'BattleTheory',
         type: 'article',
         publishedTime: article.createdAt,
         modifiedTime: article.updatedAt || article.createdAt,
@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${title} | Battle Theory`,
+        title: `${title} | BattleTheory`,
         description,
         images: [imageUrl],
       },
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: 'Strategic Briefing Dossier',
-    description: 'Declassified tactical briefings and military history analysis on Battle Theory.',
+    description: 'Declassified tactical briefings and military history analysis on BattleTheory.',
     robots: { index: false, follow: false },
   };
 }
@@ -95,7 +95,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: initialArticle.title,
-    description: initialArticle.summary || 'Military history tactical briefing on Battle Theory.',
+    description: initialArticle.summary || 'Military history tactical briefing on BattleTheory.',
     image: [articleImageUrl],
     datePublished: initialArticle.createdAt,
     dateModified: initialArticle.updatedAt || initialArticle.createdAt,
@@ -106,7 +106,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Battle Theory',
+      name: 'BattleTheory',
       url: SITE_URL,
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
     },

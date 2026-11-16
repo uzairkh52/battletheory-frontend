@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Historic Battles Archive',
   description: 'Declassified military battle archives, interactive geospatial tactical maps, and force engagement breakdowns.',
   openGraph: {
-    title: 'Historic Battles Archive | Battle Theory',
+    title: 'Historic Battles Archive | BattleTheory',
     description: 'Explore tactical battle maps, theater engagement timelines, and historic military briefings.',
     url: '/battles',
   },

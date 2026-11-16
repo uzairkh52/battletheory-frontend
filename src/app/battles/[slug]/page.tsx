@@ -24,10 +24,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         `Declassified military battle archives for ${title}.`;
 
       return {
-        title: `${title} (${battle.year || 'Historical'}) | Battle Theory`,
+        title: `${title} (${battle.year || 'Historical'}) | BattleTheory`,
         description: metaDescription,
         openGraph: {
-          title: `${title} | Battle Theory`,
+          title: `${title} | BattleTheory`,
           description: metaDescription,
           images: battle.featuredImage ? [battle.featuredImage] : [],
         },
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: 'Declassified Battle Briefing | Battle Theory',
+    title: 'Declassified Battle Briefing | BattleTheory',
     description: 'Explore tactical engagement briefings and geospatial maps.',
   };
 }

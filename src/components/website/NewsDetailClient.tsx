@@ -26,7 +26,7 @@ export default function NewsDetailClient({ slug }: { slug: string }) {
   // ⚡ Instant Browser Tab Title Update
   useEffect(() => {
     if (selectedNews?.title) {
-      document.title = `${selectedNews.title} | Battle Theory`;
+      document.title = `${selectedNews.title} | BattleTheory`;
     }
   }, [selectedNews]);
 

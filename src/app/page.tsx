@@ -113,7 +113,7 @@ export default function Home() {
         '@type': 'WebSite',
         '@id': `${SITE_URL}/#website`,
         url: SITE_URL,
-        name: 'Battle Theory',
+        name: 'BattleTheory',
         description:
           'Tactical history, battle maps, declassified archives, and modern military tech analysis.',
         publisher: { '@id': `${SITE_URL}/#org` },
@@ -121,7 +121,7 @@ export default function Home() {
       {
         '@type': 'Organization',
         '@id': `${SITE_URL}/#org`,
-        name: 'Battle Theory',
+        name: 'BattleTheory',
         url: SITE_URL,
         logo: 'https://i.postimg.cc/FsJRPMys/web-logo.png',
         sameAs: [
@@ -456,9 +456,9 @@ export default function Home() {
         <section className="grid md:grid-cols-3 gap-6">
           <div className="bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-8 space-y-3 flex flex-col justify-between">
             <div className="space-y-3">
-              <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">About Battle Theory</h2>
+              <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">About BattleTheory</h2>
               <p className="text-gray-300 text-sm font-sans leading-relaxed">
-                Battle Theory tells stories from military history, with a focus on World War II: legendary battles,
+                BattleTheory tells stories from military history, with a focus on World War II: legendary battles,
                 forgotten heroes, military technology, secret missions, and the commanders and strategies that shaped them.
               </p>
             </div>
@@ -468,7 +468,7 @@ export default function Home() {
             <div className="space-y-3">
               <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">Watch on YouTube</h2>
               <p className="text-gray-300 text-sm font-sans leading-relaxed">
-                The same battles in video form. New briefings are posted on the Battle Theory channel.
+                The same battles in video form. New briefings are posted on the BattleTheory channel.
               </p>
             </div>
             <a

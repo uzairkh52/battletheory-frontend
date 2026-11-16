@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { Shield, Lock, Eye, FileText, ArrowLeft, Terminal } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy & Data Security Protocols | Battle Theory',
+  title: 'Privacy Policy & Data Security Protocols | BattleTheory',
   description:
-    'Declassified data privacy statement, security protocols, user tracking policy, and cookie management guidelines for Battle Theory.',
+    'Declassified data privacy statement, security protocols, user tracking policy, and cookie management guidelines for BattleTheory.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -37,7 +37,7 @@ export default function PrivacyPolicyPage() {
           </h1>
 
           <p className="text-gray-400 text-xs md:text-sm max-w-2xl leading-relaxed">
-            Data protection directives, user telemetry compliance, and operational privacy guidelines governing the Battle Theory intelligence platform.
+            Data protection directives, user telemetry compliance, and operational privacy guidelines governing the BattleTheory intelligence platform.
           </p>
 
           <div className="pt-2 text-[11px] text-gray-500">
@@ -56,7 +56,7 @@ export default function PrivacyPolicyPage() {
             <span>01. OPERATIONAL OVERVIEW & DATA TELEMETRY</span>
           </div>
           <p>
-            Battle Theory (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates as a military history research, geospatial analytics, and defense technology platform. We prioritize privacy, security, and data minimization. This Privacy Policy outlines the types of information collected when users visit our web properties, interact with historical briefings, or access defense intelligence feeds.
+            BattleTheory (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) operates as a military history research, geospatial analytics, and defense technology platform. We prioritize privacy, security, and data minimization. This Privacy Policy outlines the types of information collected when users visit our web properties, interact with historical briefings, or access defense intelligence feeds.
           </p>
         </section>
 
@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage() {
             <span>03. COOKIES & TRACKING TECHNOLOGIES</span>
           </div>
           <p>
-            Battle Theory uses functional cookies and browser storage technologies strictly to enhance site performance, store user interface state (such as dark mode preferences and active filters), and aggregate anonymous traffic metrics. We do not engage in cross-site identity tracking or unauthorized data resale.
+            BattleTheory uses functional cookies and browser storage technologies strictly to enhance site performance, store user interface state (such as dark mode preferences and active filters), and aggregate anonymous traffic metrics. We do not engage in cross-site identity tracking or unauthorized data resale.
           </p>
         </section>
 
@@ -98,7 +98,7 @@ export default function PrivacyPolicyPage() {
             <span>04. THIRD-PARTY INTELLIGENCE SOURCES & LINKS</span>
           </div>
           <p>
-            Our Defense Intelligence Feed indexes external research and news publications. Battle Theory does not control and is not responsible for the privacy practices, tracking mechanisms, or content policies of third-party external websites linked from our platform. Users are advised to inspect the privacy policies of external sites.
+            Our Defense Intelligence Feed indexes external research and news publications. BattleTheory does not control and is not responsible for the privacy practices, tracking mechanisms, or content policies of third-party external websites linked from our platform. Users are advised to inspect the privacy policies of external sites.
           </p>
         </section>
 
@@ -109,7 +109,7 @@ export default function PrivacyPolicyPage() {
             <span>05. DATA SECURITY PROTOCOLS & ENCRYPTION</span>
           </div>
           <p>
-            All communications between client devices and Battle Theory endpoints are secured using industry-standard TLS/SSL encryption. We maintain active firewall barriers, rate limiters, and perimeter monitoring to prevent unauthorized access, manipulation, or disclosure of platform logs.
+            All communications between client devices and BattleTheory endpoints are secured using industry-standard TLS/SSL encryption. We maintain active firewall barriers, rate limiters, and perimeter monitoring to prevent unauthorized access, manipulation, or disclosure of platform logs.
           </p>
         </section>
 
@@ -119,7 +119,7 @@ export default function PrivacyPolicyPage() {
             SECURITY & PRIVACY INQUIRIES
           </div>
           <p className="text-gray-300 text-xs">
-            For questions, telemetry clearance requests, or privacy protocols regarding the Battle Theory platform, contact our communications desk at:{' '}
+            For questions, telemetry clearance requests, or privacy protocols regarding the BattleTheory platform, contact our communications desk at:{' '}
             <a
               href="mailto:contact@battletheory.com"
               className="text-amber-500 underline font-bold hover:text-amber-400"

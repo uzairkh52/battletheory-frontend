@@ -31,7 +31,7 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
     if (battle) {
       const titleName = battle.title || battle.name || 'Classified Engagement';
       const yearStr = battle.year ? ` (${battle.year})` : '';
-      document.title = `${titleName}${yearStr} | Battle Theory`;
+      document.title = `${titleName}${yearStr} | BattleTheory`;
     }
   }, [battle]);
 

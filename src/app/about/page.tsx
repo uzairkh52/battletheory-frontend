@@ -48,12 +48,12 @@ const INSTAGRAM_URL = 'https://www.instagram.com/BattleTheory39';
 const WHATSAPP_URL = 'https://whatsapp.com/channel/0029VbE3Ks95q08fzKPjAL1W';
 
 export const metadata: Metadata = {
-  title: 'About Battle Theory',
+  title: 'About BattleTheory',
   description:
-    'Battle Theory tells stories from military history, with a focus on World War II: legendary battles, forgotten heroes, military technology, secret missions and the commanders behind them.',
+    'BattleTheory tells stories from military history, with a focus on World War II: legendary battles, forgotten heroes, military technology, secret missions and the commanders behind them.',
   alternates: { canonical: '/about' },
   openGraph: {
-    title: 'About Battle Theory',
+    title: 'About BattleTheory',
     description:
       'Military history storytelling, interactive battle maps and defense intelligence, built by and for history enthusiasts.',
     url: '/about',
@@ -86,7 +86,7 @@ const PILLARS = [
   {
     icon: Video,
     title: 'Video Briefings',
-    text: 'The same battles told in video form on the Battle Theory YouTube channel.',
+    text: 'The same battles told in video form on the BattleTheory YouTube channel.',
     href: YOUTUBE_URL,
     cta: 'Watch on YouTube',
     external: true,
@@ -136,12 +136,12 @@ export default function AboutPage() {
     '@context': 'https://schema.org',
     '@type': 'AboutPage',
     url: `${SITE_URL}/about`,
-    name: 'About Battle Theory',
+    name: 'About BattleTheory',
     description:
-      'Battle Theory tells stories from military history, with a focus on World War II.',
+      'BattleTheory tells stories from military history, with a focus on World War II.',
     mainEntity: {
       '@type': 'Organization',
-      name: 'Battle Theory',
+      name: 'BattleTheory',
       url: SITE_URL,
       founder: { '@type': 'Person', name: 'Uzair' },
       sameAs: [FACEBOOK_URL, INSTAGRAM_URL, YOUTUBE_URL, WHATSAPP_URL],
@@ -169,7 +169,7 @@ export default function AboutPage() {
               History told with <span className="text-amber-500">maps, evidence</span> and context
             </h1>
             <p className="font-sans text-gray-300 text-base md:text-lg leading-relaxed">
-              Battle Theory tells stories from military history, with a focus on World War II:
+              BattleTheory tells stories from military history, with a focus on World War II:
               legendary battles, forgotten heroes, military technology, secret missions, and the
               commanders and strategies that shaped them.
             </p>
@@ -215,7 +215,7 @@ export default function AboutPage() {
           </div>
           <div className="md:col-span-3 space-y-4 font-sans text-gray-300 text-base leading-relaxed">
             <p>
-              Most battles are remembered as a name and a date. Battle Theory exists to show what
+              Most battles are remembered as a name and a date. BattleTheory exists to show what
               happened in between: the decisions, the terrain, the logistics and the people who
               lived through it.
             </p>
@@ -335,13 +335,13 @@ export default function AboutPage() {
         <section className="bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-10 grid md:grid-cols-5 gap-6 md:gap-10 items-center">
           <div className="md:col-span-2 space-y-2">
             <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">
-              Behind Battle Theory
+              Behind BattleTheory
             </h2>
             <p className="font-sans text-2xl font-black uppercase leading-tight">Uzair</p>
             <p className="text-[11px] uppercase tracking-wider text-gray-500">Founder &amp; researcher</p>
           </div>
           <p className="md:col-span-3 font-sans text-gray-300 leading-relaxed">
-            Battle Theory started as a passion for understanding how wars were really won and
+            BattleTheory started as a passion for understanding how wars were really won and
             lost. It grew into a growing community of readers, viewers and researchers who care
             about getting the story right. Every map, article and video is built to respect the
             people who lived it and the readers who want the real picture.
@@ -397,7 +397,7 @@ export default function AboutPage() {
             <Mail className="w-4 h-4" /> Contact us
           </Link>
           <p className="text-[11px] text-gray-600 pt-2">
-            Battle Theory content is created for educational and historical purposes.
+            BattleTheory content is created for educational and historical purposes.
           </p>
         </section>
       </div>

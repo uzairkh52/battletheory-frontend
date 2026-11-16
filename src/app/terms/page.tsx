@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { Shield, FileText, AlertTriangle, Scale, ArrowLeft, Terminal, Lock } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions | Battle Theory Protocols',
+  title: 'Terms & Conditions | BattleTheory Protocols',
   description:
-    'Terms of service, operational protocols, intellectual property rights, and user compliance directives for the Battle Theory platform.',
+    'Terms of service, operational protocols, intellectual property rights, and user compliance directives for the BattleTheory platform.',
 };
 
 export default function TermsAndConditionsPage() {
@@ -37,7 +37,7 @@ export default function TermsAndConditionsPage() {
           </h1>
 
           <p className="text-gray-400 text-xs md:text-sm max-w-2xl leading-relaxed">
-            Standard operating conditions, content licensing directives, and liability limitations governing user engagement across Battle Theory intelligence properties.
+            Standard operating conditions, content licensing directives, and liability limitations governing user engagement across BattleTheory intelligence properties.
           </p>
 
           <div className="pt-2 text-[11px] text-gray-500">
@@ -56,7 +56,7 @@ export default function TermsAndConditionsPage() {
             <span>01. ACCEPTANCE OF OPERATIONAL TERMS</span>
           </div>
           <p>
-            By accessing, browsing, or utilizing the Battle Theory platform, interactive geospatial maps, or research briefings, you agree to comply with and be bound by these Terms and Conditions. If you do not agree with any part of these operational guidelines, you are prohibited from accessing the platform endpoints.
+            By accessing, browsing, or utilizing the BattleTheory platform, interactive geospatial maps, or research briefings, you agree to comply with and be bound by these Terms and Conditions. If you do not agree with any part of these operational guidelines, you are prohibited from accessing the platform endpoints.
           </p>
         </section>
 
@@ -67,14 +67,14 @@ export default function TermsAndConditionsPage() {
             <span>02. INTELLECTUAL PROPERTY & BRIEFING RIGHTS</span>
           </div>
           <p>
-            All original research dossiers, tactical visualizers, channel branding elements, custom software interfaces, and media productions published under the Battle Theory brand are protected by international copyright and intellectual property laws:
+            All original research dossiers, tactical visualizers, channel branding elements, custom software interfaces, and media productions published under the BattleTheory brand are protected by international copyright and intellectual property laws:
           </p>
           <ul className="list-disc list-inside space-y-2 text-gray-400 pl-2">
             <li>
               <strong className="text-white font-mono">Personal & Educational Use:</strong> Permission is granted to temporarily access and review research briefings for personal, non-commercial educational analysis.
             </li>
             <li>
-              <strong className="text-white font-mono">Prohibited Exploitation:</strong> You may not modify, distribute, mirror, scrape, or commercially exploit any proprietary Battle Theory graphics, video assets, or dynamic visualizers without prior written consent.
+              <strong className="text-white font-mono">Prohibited Exploitation:</strong> You may not modify, distribute, mirror, scrape, or commercially exploit any proprietary BattleTheory graphics, video assets, or dynamic visualizers without prior written consent.
             </li>
           </ul>
         </section>
@@ -97,7 +97,7 @@ export default function TermsAndConditionsPage() {
             <span>04. DISCLAIMER & ACCURACY OF INTELLIGENCE</span>
           </div>
           <p>
-            Historical engagement analyses, geospatial battle data, and military technological briefings provided on Battle Theory are compiled for informational and historical research purposes. While we strive for rigorous research standards, content is provided &quot;as is&quot; without warranties regarding absolute completeness or realtime operational accuracy.
+            Historical engagement analyses, geospatial battle data, and military technological briefings provided on BattleTheory are compiled for informational and historical research purposes. While we strive for rigorous research standards, content is provided &quot;as is&quot; without warranties regarding absolute completeness or realtime operational accuracy.
           </p>
         </section>
 
@@ -108,7 +108,7 @@ export default function TermsAndConditionsPage() {
             <span>05. LIMITATION OF LIABILITY</span>
           </div>
           <p>
-            In no event shall Battle Theory or its team be liable for any direct, indirect, incidental, or consequential damages arising out of the use or inability to use the platform, historical archives, or third-party intelligence feeds indexed within our feeds.
+            In no event shall BattleTheory or its team be liable for any direct, indirect, incidental, or consequential damages arising out of the use or inability to use the platform, historical archives, or third-party intelligence feeds indexed within our feeds.
           </p>
         </section>
 

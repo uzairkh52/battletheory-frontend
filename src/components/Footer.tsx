@@ -9,7 +9,7 @@ export default function Footer() {
           <Link href="/" className="inline-block focus:outline-none">
             <Image
               src="https://i.postimg.cc/FsJRPMys/web-logo.png"
-              alt="Battle Theory Logo"
+              alt="BattleTheory Logo"
               width={240}
               height={60}
               className="h-12 md:h-16 w-auto object-contain"
@@ -26,7 +26,7 @@ export default function Footer() {
             <li><Link href="/battles" className="hover:text-amber-500 transition-colors">Battle Maps</Link></li>
             <li><Link href="/articles" className="hover:text-amber-500 transition-colors">Field Intelligence</Link></li>
             <li><Link href="/news" className="hover:text-amber-500 transition-colors">Defense Tech AI</Link></li>
-            <li><Link href="/about" className="hover:text-amber-500 transition-colors">About Battle Theory</Link></li>
+            <li><Link href="/about" className="hover:text-amber-500 transition-colors">About BattleTheory</Link></li>
           </ul>
         </div>
 
@@ -41,7 +41,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-gray-800/80 py-4 text-center text-xs text-gray-600">
-        © {new Date().getFullYear()} Battle Theory Ops. All rights reserved.
+        © {new Date().getFullYear()} BattleTheory Ops. All rights reserved.
       </div>
     </footer>
   );
