@@ -56,15 +56,19 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
   }
 
   const battleTitle = battle.title || battle.name || 'CLASSIFIED ENGAGEMENT';
-  
-  // 🌟 EXACT DATABASE FIELD MAPPINGS
   const battleSummary = battle.summary || '';
-  
-  // MongoDB uses 'content' for the detailed breakdown
-  const battleDescription =
+
+  const rawDescription =
     (battle as any).content ||
     battle.description ||
     'No detailed engagement history logged for this record.';
+
+  const sanitizedDescription = rawDescription
+    .replace(/\u00AD/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/(>[^<]*)</g, (match: string) =>
+      match.replace(/-/g, '&#8209;')
+    );
 
   return (
     <div className="max-w-4xl mx-auto my-8 px-4 space-y-8 font-mono text-white">
@@ -110,7 +114,7 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* 🌟 EXACT SUMMARY FROM DATABASE */}
+      {/* Executive Summary */}
       {battleSummary && (
         <div className="space-y-2">
           <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold flex items-center gap-2">
@@ -118,7 +122,7 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
           </h3>
           <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg">
             <p className="text-amber-200 font-sans text-sm leading-relaxed italic">
-              "{battleSummary}"
+              &ldquo;{battleSummary}&rdquo;
             </p>
           </div>
         </div>
@@ -131,11 +135,12 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
         </h3>
         <div className="bg-[#111827] border border-gray-800 p-6 rounded-lg overflow-hidden">
           <div
-            className="text-gray-200 leading-relaxed font-sans text-sm break-all break-words [word-break:break-word] 
-                       [&_*]:!text-gray-200 [&_p]:!text-gray-200 [&_span]:!text-gray-200
+            style={{ wordBreak: 'normal', overflowWrap: 'break-word', hyphens: 'none' }}
+            className="text-gray-200 leading-relaxed font-sans text-sm ![word-break:normal] ![overflow-wrap:break-word] ![hyphens:none]
+                       [&_*]:!text-gray-200 [&_*]:![word-break:normal] [&_*]:![overflow-wrap:break-word] [&_*]:![hyphens:none]
                        [&_p]:mb-4 [&_br]:block [&_br]:content-[''] [&_br]:my-2
-                       [&_a]:!text-amber-500 [&_a]:underline [&_a]:font-bold [&_a]:my-2 [&_a]:inline-block"
-            dangerouslySetInnerHTML={{ __html: battleDescription }}
+                       [&_a]:!text-amber-500 [&_a]:underline [&_a]:font-bold [&_a]:![word-break:break-all]"
+            dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
           />
         </div>
       </div>
@@ -169,7 +174,7 @@ export default function BattleDetailClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* 🌟 MOVED DOWN: TACTICAL VIDEO BRIEFING (YOUTUBE / FACEBOOK) */}
+      {/* Tactical Video Briefing */}
       {(battle as any).videoEmbed && (battle as any).videoEmbed.trim() !== '' && (
         <div className="space-y-3 max-w-2xl mx-auto pt-2">
           <h3 className="text-xs font-mono text-amber-500 uppercase tracking-widest font-bold flex items-center gap-2">
