@@ -69,6 +69,13 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
   const imageUrl = article.featuredImage || article.imageUrl || article.image;
   const articleId = article._id || article.id;
 
+  const sanitizedContent = (article.content || '')
+    .replace(/\u00AD/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/(>[^<]*)</g, (match: string) =>
+      match.replace(/-/g, '&#8209;')
+    );
+
   return (
     <article className={`${styles.articleContainer} max-w-4xl mx-auto my-8 space-y-8 px-4 font-mono relative`}>
       <div>
@@ -197,8 +204,8 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
         </h3>
 
         <div
-          className="prose prose-invert max-w-none text-gray-300 font-sans text-sm md:text-base leading-relaxed space-y-4 break-words overflow-hidden [word-break:break-word]"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          className="prose prose-invert max-w-none text-gray-300 font-sans text-sm md:text-base leading-relaxed space-y-4 overflow-hidden [word-break:normal] [overflow-wrap:break-word] [hyphens:none]"
+          dangerouslySetInnerHTML={{ __html: sanitizedContent }}
         />
       </div>
 

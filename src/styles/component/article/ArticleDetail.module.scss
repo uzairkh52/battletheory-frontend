@@ -1,17 +1,40 @@
 .articleContainer {
-  /* Rich text content ke andar ke sabhi tags par inline styles ko ignore karna */
+  /* Rich text content ke andar ke sabhi tags par inline styles aur unwanted word-breaks ko clean karna */
   :global(.prose) {
-    *, 
-    *::before, 
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important;
+    -webkit-hyphens: none !important;
+
+    *,
+    *::before,
     *::after {
       color: inherit !important;
       background-color: transparent !important;
+      word-break: normal !important;
+      hyphens: none !important;
+      -webkit-hyphens: none !important;
     }
 
-    /* Agar kuch specific tags par background color reh jaye */
-    p, span, strong, em, b, i, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote {
+    p,
+    span,
+    strong,
+    em,
+    b,
+    i,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    li,
+    ul,
+    ol,
+    blockquote {
       color: inherit !important;
       background-color: transparent !important;
+      white-space: normal !important;
     }
   }
 }
