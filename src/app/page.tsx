@@ -146,7 +146,7 @@ export default function Home() {
           <div className="grid md:grid-cols-5 gap-8 items-center">
             <div className="md:col-span-3 space-y-4">
               <span className="text-xs font-bold uppercase tracking-widest text-amber-500 bg-amber-500/10 px-3 py-1 rounded border border-amber-500/20">
-                [ TACTICAL OPERATIONS ARCHIVE v1.3 ]
+                [ TACTICAL OPERATIONS ARCHIVE v1.4 ]
               </span>
               <h1 className="v1 text-3xl md:text-5xl font-black text-white tracking-tight leading-tight uppercase font-sans">
                 Deep-dive military history & tactical analysis
