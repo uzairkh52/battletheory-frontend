@@ -3,7 +3,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
-import { Radio, ExternalLink, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
+import {
+  Radio,
+  ExternalLink,
+  ChevronRight,
+  Loader2,
+  RefreshCw,
+  Newspaper,
+} from 'lucide-react';
 import type { AppDispatch, RootState } from '@/store/store';
 import { fetchNewsList, type NewsItem } from '@/store/slices/newsSlice';
 
@@ -35,24 +42,52 @@ const getImage = (item: NewsItem): string =>
     (v): v is string => typeof v === 'string' && v.trim() !== ''
   ) || '';
 
-function NewsThumb({ src, alt, priority }: { src: string; alt: string; priority: boolean }) {
+function FallbackIcon() {
+  return <Newspaper className="w-6 h-6 sm:w-7 sm:h-7 text-amber-500/80" />;
+}
+
+function NewsThumb({
+  src,
+  alt,
+  priority,
+}: {
+  src: string;
+  alt: string;
+  priority: boolean;
+}) {
   const [failed, setFailed] = useState(false);
-  if (!src || failed) return null;
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  const showFallback = !src || failed;
 
   return (
-    <div className="order-2 sm:order-1 relative shrink-0 w-24 h-24 sm:w-36 sm:h-28 rounded-md overflow-hidden bg-gray-900 border border-gray-800">
-      <img
-        src={src}
-        alt={alt}
-        width={144}
-        height={112}
-        loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : 'auto'}
-        decoding="async"
-        referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
-        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-      />
+    <div className="order-2 sm:order-1 relative shrink-0 w-24 h-24 sm:w-36 sm:h-28 rounded-md overflow-hidden bg-gradient-to-br from-gray-900 via-[#0d1320] to-black border border-gray-800 flex flex-col items-center justify-center gap-1.5">
+      {showFallback ? (
+        <>
+          <div className="w-10 h-10 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <FallbackIcon />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">
+            No Thumb
+          </span>
+        </>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          width={144}
+          height={112}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          decoding="async"
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)}
+          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      )}
     </div>
   );
 }

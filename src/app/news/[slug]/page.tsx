@@ -60,7 +60,7 @@ export default function NewsDetailPage() {
     : '';
 
   return (
-    <article className="max-w-4xl mx-auto px-4 py-6 sm:py-10 space-y-6 text-white">
+    <article className="max-w-4xl mx-auto px-4 py-6 sm:py-10 space-y-6 text-white overflow-x-hidden min-w-0">
       <div>
         <Link
           href="/news"
@@ -70,7 +70,7 @@ export default function NewsDetailPage() {
         </Link>
       </div>
 
-      <header className="space-y-4 border-b border-gray-800 pb-6">
+      <header className="space-y-4 border-b border-gray-800 pb-6 min-w-0">
         <div className="flex flex-wrap items-center gap-2.5 font-mono text-[11px] uppercase tracking-wider">
           <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded font-bold">
             {selectedNews.category || 'Defense'}
@@ -89,12 +89,12 @@ export default function NewsDetailPage() {
           )}
         </div>
 
-        <h1 className="font-sans text-2xl sm:text-4xl font-black leading-tight">
+        <h1 className="font-sans text-2xl sm:text-4xl font-black leading-tight break-words">
           {selectedNews.title}
         </h1>
 
         {selectedNews.summary && (
-          <p className="font-sans text-base text-gray-300 leading-relaxed">
+          <p className="font-sans text-base text-gray-300 leading-relaxed break-words">
             {selectedNews.summary}
           </p>
         )}
@@ -113,18 +113,18 @@ export default function NewsDetailPage() {
 
       {/* Main Article Content */}
       <div
-        className="prose prose-invert max-w-none font-sans text-gray-200 leading-relaxed space-y-4"
+        className="prose prose-invert max-w-none w-full min-w-0 overflow-x-hidden font-sans text-gray-200 leading-relaxed space-y-4 break-words [&_p]:whitespace-normal [&_p]:break-words [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_*]:max-w-full"
         dangerouslySetInnerHTML={{ __html: selectedNews.content }}
       />
 
       {/* Original Tactical Analysis Box */}
       {selectedNews.tacticalAnalysis && (
-        <section className="mt-8 rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6 space-y-2.5">
+        <section className="mt-8 rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6 space-y-2.5 min-w-0">
           <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-amber-400">
-            <ShieldAlert className="w-4 h-4" />
+            <ShieldAlert className="w-4 h-4 shrink-0" />
             BattleTheory Tactical Assessment
           </div>
-          <p className="font-sans text-sm text-gray-200 leading-relaxed">
+          <p className="font-sans text-sm text-gray-200 leading-relaxed break-words">
             {selectedNews.tacticalAnalysis}
           </p>
         </section>
@@ -149,12 +149,12 @@ export default function NewsDetailPage() {
             href={externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase text-amber-500 hover:underline"
+            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase text-amber-500 hover:underline break-all"
           >
-            View Reference Source <ExternalLink className="w-3.5 h-3.5" />
+            View Reference Source <ExternalLink className="w-3.5 h-3.5 shrink-0" />
           </a>
         </div>
       )}
     </article>
   );
-}
+} 
