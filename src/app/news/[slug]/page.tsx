@@ -1,160 +1,107 @@
-'use client';
+import type { Metadata } from 'next';
+import NewsDetailClient from '@/components/website/NewsDetailClient';
 
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
-import { ArrowLeft, ExternalLink, ShieldAlert, Loader2 } from 'lucide-react';
-import type { AppDispatch, RootState } from '@/store/store';
-import { fetchNewsBySlug, setSelectedNews } from '@/store/slices/newsSlice';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.battletheory.net/api';
 
-export default function NewsDetailPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params?.slug;
-  const dispatch = useDispatch<AppDispatch>();
+async function getNewsBySlug(slug: string) {
+  try {
+    const res = await fetch(`${API_BASE}/news/slug/${encodeURIComponent(slug)}`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.news || data?.data || data || null;
+  } catch {
+    return null;
+  }
+}
 
-  const { selectedNews, detailLoading, error } = useSelector((state: RootState) => state.news);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const news = await getNewsBySlug(slug);
 
-  useEffect(() => {
-    if (!slug) return;
-    dispatch(fetchNewsBySlug(slug));
-    return () => {
-      dispatch(setSelectedNews(null));
+  const siteName = 'BattleTheory';
+  const defaultTitle = 'BattleTheory | High-Performance Military Intelligence';
+  const defaultDescription =
+    'In-depth military history, defense briefings, naval and aerial campaigns, and strategic intelligence analysis from BattleTheory.';
+  const defaultImage = 'https://i.postimg.cc/FsJRPMys/web-logo.png';
+
+  if (!news) {
+    return {
+      title: defaultTitle,
+      description: defaultDescription,
+      openGraph: {
+        type: 'website',
+        siteName,
+        title: defaultTitle,
+        description: defaultDescription,
+        url: `https://www.battletheory.net/news/${slug}`,
+        images: [{ url: defaultImage, width: 1200, height: 630, alt: siteName }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: defaultTitle,
+        description: defaultDescription,
+        images: [defaultImage],
+      },
     };
-  }, [dispatch, slug]);
-
-  if (detailLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-16 flex items-center justify-center gap-3 font-mono text-xs text-gray-400">
-        <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-        Loading briefing...
-      </div>
-    );
   }
 
-  if (error || !selectedNews) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4 font-mono">
-        <p className="text-sm text-red-400">{error || 'Briefing not found.'}</p>
-        <Link
-          href="/news"
-          className="inline-flex items-center gap-2 text-xs uppercase text-amber-500 hover:underline"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to News
-        </Link>
-      </div>
-    );
-  }
+  const title = news.title ? `${news.title} | ${siteName}` : defaultTitle;
+  const cleanSummary = String(news.summary || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  const image = selectedNews.image || selectedNews.imageUrl || selectedNews.thumbnail;
-  const imageAlt = selectedNews.imageAlt || selectedNews.title;
-  const externalUrl = selectedNews.sourceUrl || selectedNews.link;
-  const rawDate = selectedNews.publishedAt || selectedNews.createdAt;
-  const formattedDate = rawDate
-    ? new Date(rawDate).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-      })
-    : '';
+  const description =
+    cleanSummary.length >= 100
+      ? cleanSummary
+      : `${cleanSummary ? `${cleanSummary} — ` : ''}${defaultDescription}`;
 
-  return (
-    <article className="max-w-4xl mx-auto px-4 py-6 sm:py-10 space-y-6 text-white overflow-x-hidden min-w-0">
-      <div>
-        <Link
-          href="/news"
-          className="inline-flex items-center gap-1.5 font-mono text-xs uppercase text-amber-500 hover:underline"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> All Briefings
-        </Link>
-      </div>
+  const rawImage = news.image || news.imageUrl || news.thumbnail || defaultImage;
+  const imageUrl =
+    typeof rawImage === 'string' && rawImage.startsWith('http')
+      ? rawImage
+      : defaultImage;
 
-      <header className="space-y-4 border-b border-gray-800 pb-6 min-w-0">
-        <div className="flex flex-wrap items-center gap-2.5 font-mono text-[11px] uppercase tracking-wider">
-          <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded font-bold">
-            {selectedNews.category || 'Defense'}
-          </span>
-          {selectedNews.isBreaking && (
-            <span className="text-red-400 bg-red-500/10 border border-red-500/30 px-2.5 py-0.5 rounded font-bold">
-              Breaking
-            </span>
-          )}
-          <span className="text-gray-400">
-            {selectedNews.author || selectedNews.source || 'BattleTheory Editorial'}
-          </span>
-          {formattedDate && <span className="text-gray-600">· {formattedDate}</span>}
-          {typeof selectedNews.readingTime === 'number' && selectedNews.readingTime > 0 && (
-            <span className="text-gray-500">· {selectedNews.readingTime} min read</span>
-          )}
-        </div>
+  return {
+    title,
+    description,
+    openGraph: {
+      type: 'article',
+      siteName,
+      title,
+      description,
+      url: `https://www.battletheory.net/news/${slug}`,
+      publishedTime: news.publishedAt || news.createdAt,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: news.imageAlt || news.title || siteName,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
+}
 
-        <h1 className="font-sans text-2xl sm:text-4xl font-black leading-tight break-words">
-          {selectedNews.title}
-        </h1>
-
-        {selectedNews.summary && (
-          <p className="font-sans text-base text-gray-300 leading-relaxed break-words">
-            {selectedNews.summary}
-          </p>
-        )}
-      </header>
-
-      {image && (
-        <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-800 bg-gray-900">
-          <img
-            src={image}
-            alt={imageAlt}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
-
-      {/* Main Article Content */}
-      <div
-        className="prose prose-invert max-w-none w-full min-w-0 overflow-x-hidden font-sans text-gray-200 leading-relaxed space-y-4 break-words [&_p]:whitespace-normal [&_p]:break-words [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_*]:max-w-full"
-        dangerouslySetInnerHTML={{ __html: selectedNews.content }}
-      />
-
-      {/* Original Tactical Analysis Box */}
-      {selectedNews.tacticalAnalysis && (
-        <section className="mt-8 rounded-lg border border-amber-500/30 bg-amber-500/5 p-5 sm:p-6 space-y-2.5 min-w-0">
-          <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-amber-400">
-            <ShieldAlert className="w-4 h-4 shrink-0" />
-            BattleTheory Tactical Assessment
-          </div>
-          <p className="font-sans text-sm text-gray-200 leading-relaxed break-words">
-            {selectedNews.tacticalAnalysis}
-          </p>
-        </section>
-      )}
-
-      {Array.isArray(selectedNews.tags) && selectedNews.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-2">
-          {selectedNews.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-2.5 py-1 rounded bg-gray-900 border border-gray-800 font-mono text-[11px] text-gray-300"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {externalUrl && (
-        <div className="pt-4 border-t border-gray-800">
-          <a
-            href={externalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-mono text-xs uppercase text-amber-500 hover:underline break-all"
-          >
-            View Reference Source <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-          </a>
-        </div>
-      )}
-    </article>
-  );
-} 
+export default async function NewsSlugPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const initialNews = await getNewsBySlug(slug);
+  return <NewsDetailClient slugProp={slug} initialNews={initialNews} />;
+}

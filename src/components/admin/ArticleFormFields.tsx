@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, KeyboardEvent } from 'react';
+import React, { useState, useMemo, useRef, KeyboardEvent } from 'react';
 import dynamic from 'next/dynamic';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
@@ -19,42 +19,59 @@ interface ArticleFormFieldsProps {
   tags?: string[];
   setTags?: React.Dispatch<React.SetStateAction<string[]>>;
   categories?: any[];
-  newCatName: string;
-  showAddCat: boolean;
-  setNewCatName: (val: string) => void;
-  setShowAddCat: React.Dispatch<React.SetStateAction<boolean>>;
-  onAddCategory: () => void;
-  onDeleteCategory: (id: string) => void;
+  newCatName?: string;
+  showAddCat?: boolean;
+  setNewCatName?: (val: string) => void;
+  setShowAddCat?: React.Dispatch<React.SetStateAction<boolean>>;
+  onAddCategory?: () => void;
+  onDeleteCategory?: (id: string) => void;
   onChange: (field: string, value: any) => void;
   showSlug?: boolean;
-  addingCategory?: boolean; // 🌟 Loading prop for category button
+  addingCategory?: boolean;
 }
 
-export default function ArticleFormFields({ 
-  formData, 
+const QUILL_FORMATS = [
+  'header',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
+  'list',
+  'image',
+  'link',
+  'video',
+];
+
+export default function ArticleFormFields({
+  formData,
   tags = [],
   setTags,
   categories = [],
-  newCatName,
-  showAddCat,
+  newCatName = '',
+  showAddCat = false,
   setNewCatName,
   setShowAddCat,
   onAddCategory,
   onDeleteCategory,
-  onChange, 
+  onChange,
   showSlug = true,
-  addingCategory = false
+  addingCategory = false,
 }: ArticleFormFieldsProps) {
   const [tagInput, setTagInput] = useState('');
+  const [showUrlBar, setShowUrlBar] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+
+  const quillRef = useRef<any>(null);
+  const savedRangeRef = useRef<{ index: number; length: number } | null>(null);
 
   const slugify = (text: string) => {
     return text
       .toString()
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, '-')     
-      .replace(/[^\w\-]+/g, '') 
-      .replace(/\-\-+/g, '-');  
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-');
   };
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,25 +129,59 @@ export default function ArticleFormFields({
     setTagInput('');
   };
 
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      ['image', 'link', 'video'],
-      ['clean'],
-    ],
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['image', 'link', 'video'],
+          ['clean'],
+        ],
+        handlers: {
+          image: function () {
+            const editor = quillRef.current?.getEditor?.();
+            if (editor) {
+              const range = editor.getSelection(true);
+              savedRangeRef.current = {
+                index: range?.index ?? editor.getLength(),
+                length: range?.length ?? 0,
+              };
+            }
+            setShowUrlBar(true);
+          },
+        },
+      },
+    }),
+    []
+  );
+
+  const handleApplyImageUrl = () => {
+    const cleanUrl = urlInput.trim();
+    if (!cleanUrl) return;
+
+    const editor = quillRef.current?.getEditor?.();
+    if (editor) {
+      const targetIndex =
+        savedRangeRef.current?.index ?? editor.getSelection(true)?.index ?? editor.getLength();
+
+      if (savedRangeRef.current?.length) {
+        editor.deleteText(targetIndex, savedRangeRef.current.length);
+      }
+
+      editor.insertEmbed(targetIndex, 'image', cleanUrl, 'user');
+      editor.setSelection(targetIndex + 1, 0, 'user');
+      onChange('content', editor.root.innerHTML);
+    }
+
+    setUrlInput('');
+    setShowUrlBar(false);
+    savedRangeRef.current = null;
   };
 
-  const formats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list',
-    'image', 'link', 'video'
-  ];
-
   return (
-    <div className="space-y-4 font-mono text-xs">
+    <div className="space-y-4 font-mono text-xs min-w-0">
       {/* Title Field */}
       <div>
         <label className="block text-gray-400 mb-1 uppercase">Title</label>
@@ -169,16 +220,18 @@ export default function ArticleFormFields({
       <div>
         <div className="flex justify-between items-center mb-1">
           <label className="block text-gray-400 uppercase">Category</label>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowAddCat((prev) => !prev);
-            }}
-            className="text-[10px] text-amber-500 hover:underline uppercase font-bold cursor-pointer"
-          >
-            {showAddCat ? '- Cancel' : '+ Add New'}
-          </button>
+          {setShowAddCat && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowAddCat((prev) => !prev);
+              }}
+              className="text-[10px] text-amber-500 hover:underline uppercase font-bold cursor-pointer"
+            >
+              {showAddCat ? '- Cancel' : '+ Add New'}
+            </button>
+          )}
         </div>
 
         {showAddCat ? (
@@ -187,24 +240,39 @@ export default function ArticleFormFields({
               type="text"
               placeholder="New Category Name..."
               value={newCatName}
-              onChange={(e) => setNewCatName(e.target.value)}
+              onChange={(e) => setNewCatName?.(e.target.value)}
               className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white text-xs outline-none focus:border-amber-500"
             />
-            {/* 🌟 Category Save Button with Loading Spinner */}
             <button
               type="button"
               disabled={addingCategory}
               onClick={(e) => {
                 e.preventDefault();
-                onAddCategory();
+                onAddCategory?.();
               }}
               className="bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-black font-bold px-3 text-xs uppercase rounded cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
             >
               {addingCategory ? (
                 <>
-                  <svg className="animate-spin h-3.5 w-3.5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin h-3.5 w-3.5 text-black"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   <span>Saving...</span>
                 </>
@@ -221,11 +289,14 @@ export default function ArticleFormFields({
               onChange={(e) => onChange('category', e.target.value)}
               className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
             >
-              <option value="" className="text-gray-500 bg-black">-- SELECT CATEGORY --</option>
+              <option value="" className="text-gray-500 bg-black">
+                -- SELECT CATEGORY --
+              </option>
               {categories && categories.length > 0 ? (
                 categories.map((cat: any, idx: number) => {
                   const catId = cat._id || cat.id || idx;
-                  const catName = typeof cat === 'object' && cat !== null ? (cat.name || cat.title)?.trim() : cat;
+                  const catName =
+                    typeof cat === 'object' && cat !== null ? (cat.name || cat.title)?.trim() : cat;
                   return (
                     <option key={catId} value={catId} className="bg-[#111827] text-white py-1">
                       {catName}
@@ -239,7 +310,7 @@ export default function ArticleFormFields({
               )}
             </select>
 
-            {formData.category && (
+            {formData.category && onDeleteCategory && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -342,16 +413,59 @@ export default function ArticleFormFields({
         />
       </div>
 
-      {/* Content Field (Rich Text Editor) */}
-      <div>
+      {/* Content Field (Rich Text Editor with URL Image Bar) */}
+      <div className="space-y-2">
         <label className="block text-gray-400 mb-1 uppercase">Content (Rich Text Editor)</label>
-        <div className="bg-white text-black rounded overflow-hidden">
+
+        {showUrlBar && (
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-[#0b0f19] border border-amber-500/50 rounded p-2.5">
+            <input
+              type="url"
+              autoFocus
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleApplyImageUrl();
+                } else if (e.key === 'Escape') {
+                  setShowUrlBar(false);
+                  setUrlInput('');
+                }
+              }}
+              placeholder="Paste image URL (https://...)"
+              className="flex-1 min-w-0 bg-black border border-gray-700 focus:border-amber-500 rounded px-3 py-1.5 text-xs text-white outline-none"
+            />
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleApplyImageUrl}
+                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold uppercase rounded text-xs cursor-pointer"
+              >
+                Insert
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUrlBar(false);
+                  setUrlInput('');
+                }}
+                className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold uppercase rounded text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white text-black rounded overflow-hidden [&_.ql-editor_img]:max-w-full [&_.ql-editor_img]:h-auto [&_.ql-editor_img]:rounded [&_.ql-editor_img]:my-2">
           <ReactQuill
+            ref={quillRef}
             theme="snow"
             value={formData.content}
             onChange={(contentValue) => onChange('content', contentValue)}
             modules={modules}
-            formats={formats}
+            formats={QUILL_FORMATS}
             placeholder="Detailed article body text..."
             className="min-h-[250px]"
           />
