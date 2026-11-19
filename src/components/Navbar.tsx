@@ -6,8 +6,8 @@ import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
+import { fetchArticleBySlug } from '@/store/slices/articleSlice';
 
-// Icons object
 const Icons = {
   Battle: () => (
     <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,6 +39,11 @@ const Icons = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
     </svg>
   ),
+  Edit: () => (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+  ),
   Logout: () => (
     <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -67,7 +72,7 @@ function NavbarContent() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -76,6 +81,8 @@ function NavbarContent() {
 
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const bookmarks = useAppSelector((state: any) => state.bookmarks?.items || []);
+  const currentArticle = useAppSelector((state: any) => state.articles?.article);
+  const articlesList = useAppSelector((state: any) => state.articles?.articles || state.articles?.items || []);
 
   const navLinks = [
     { name: 'Battles', path: '/battles', icon: Icons.Battle },
@@ -83,6 +90,41 @@ function NavbarContent() {
     { name: 'Defense News', path: '/news', icon: Icons.News },
     { name: 'About', path: '/about', icon: Icons.About },
   ];
+
+  const isAdmin = Boolean(user?.isAdmin || (user as any)?.role === 'admin');
+  const slugMatch = pathname?.match(/^\/(news|articles)\/([^/]+)$/);
+  const slugType = slugMatch?.[1] as 'news' | 'articles' | undefined;
+  const slugValue = slugMatch?.[2];
+
+  const matchedArticle =
+    slugType === 'articles' && slugValue
+      ? currentArticle?.slug === slugValue
+        ? currentArticle
+        : articlesList.find((a: any) => a.slug === slugValue || a._id === slugValue)
+      : null;
+
+  const articleId = matchedArticle?._id || matchedArticle?.id;
+
+  useEffect(() => {
+    if (mounted && isAuthenticated && isAdmin && slugType === 'articles' && slugValue && !articleId) {
+      dispatch(fetchArticleBySlug(slugValue));
+    }
+  }, [mounted, isAuthenticated, isAdmin, slugType, slugValue, articleId, dispatch]);
+
+  const showAdminSlugEdit =
+    mounted &&
+    isAuthenticated &&
+    isAdmin &&
+    Boolean(slugType && slugValue) &&
+    slugValue !== 'page' &&
+    (slugType === 'news' || Boolean(articleId));
+
+  const editHref =
+    slugType === 'news'
+      ? `/admin/news?slug=${encodeURIComponent(slugValue || '')}`
+      : `/admin/articles/edit/${articleId}`;
+
+  const editLabel = slugType === 'news' ? 'Edit News' : 'Edit Article';
 
   useEffect(() => {
     setMounted(true);
@@ -133,7 +175,6 @@ function NavbarContent() {
   return (
     <>
       <nav className="flex justify-between items-center py-3 px-4 md:px-6 bg-[#0b0f19] border-b border-gray-800/80 relative z-40 font-mono">
-        {/* Left Side: Brand Logo & Desktop Links */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 focus:outline-none">
             <Image
@@ -146,10 +187,9 @@ function NavbarContent() {
             />
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6 text-xs uppercase tracking-wider font-bold">
             {navLinks.map((link) => {
-              const isActive = pathname === link.path;
+              const isActive = pathname === link.path || pathname?.startsWith(`${link.path}/`);
               const IconComponent = link.icon;
               return (
                 <Link
@@ -169,7 +209,6 @@ function NavbarContent() {
           </div>
         </div>
 
-        {/* Desktop Right Side Group */}
         <div className="hidden md:flex items-center gap-3">
           <form onSubmit={handleSearchSubmit} className="w-64 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -183,6 +222,16 @@ function NavbarContent() {
               className="w-full bg-[#121827] border border-gray-800 focus:border-amber-500 rounded-lg pl-9 pr-4 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none transition-all font-sans"
             />
           </form>
+
+          {showAdminSlugEdit && (
+            <Link
+              href={editHref}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500 text-amber-400 hover:text-black border border-amber-500/40 rounded text-xs font-bold uppercase tracking-wider transition-colors shrink-0"
+            >
+              <Icons.Edit />
+              <span>{editLabel}</span>
+            </Link>
+          )}
 
           {!mounted ? (
             <div className="h-8 w-24 bg-gray-800/50 rounded animate-pulse" />
@@ -226,7 +275,7 @@ function NavbarContent() {
                       <p className="text-gray-200 font-bold truncate">{user?.email}</p>
                     </div>
 
-                    {user?.isAdmin && (
+                    {isAdmin && (
                       <Link
                         href="/admin"
                         onClick={() => setDropdownOpen(false)}
@@ -258,8 +307,17 @@ function NavbarContent() {
           )}
         </div>
 
-        {/* Mobile Header Action Buttons */}
-        <div className="flex md:hidden items-center gap-3">
+        <div className="flex md:hidden items-center gap-2">
+          {showAdminSlugEdit && (
+            <Link
+              href={editHref}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/15 text-amber-400 border border-amber-500/40 rounded-lg text-[10px] font-bold uppercase"
+            >
+              <Icons.Edit />
+              <span>Edit</span>
+            </Link>
+          )}
+
           <button
             onClick={() => setMobileSearchOpen((prev) => !prev)}
             className="p-2 text-gray-400 hover:text-amber-500 bg-[#121827] border border-gray-800 rounded-lg"
@@ -292,7 +350,6 @@ function NavbarContent() {
         </div>
       </nav>
 
-      {/* Mobile Collapsible Search Input */}
       {mobileSearchOpen && (
         <div className="md:hidden bg-[#0d1322] px-4 py-3 border-b border-gray-800">
           <form onSubmit={handleSearchSubmit} className="relative w-full">
@@ -311,7 +368,6 @@ function NavbarContent() {
         </div>
       )}
 
-      {/* Side Drawer Overlay Backdrop */}
       {drawerOpen && (
         <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 md:hidden transition-opacity"
@@ -319,13 +375,11 @@ function NavbarContent() {
         />
       )}
 
-      {/* Tactical Side Drawer Panel */}
       <div
         className={`fixed top-0 right-0 h-full w-72 bg-[#0a0e17] border-l border-gray-800 z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col font-mono ${
           drawerOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Drawer Header */}
         <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0d1322]">
           <span className="text-amber-500 font-black text-sm uppercase tracking-widest">
             Tactical Menu
@@ -335,7 +389,6 @@ function NavbarContent() {
           </button>
         </div>
 
-        {/* User Info Card (if logged in) */}
         {mounted && isAuthenticated && user && (
           <div className="p-4 bg-[#111726] border-b border-gray-800/80">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider">Operator Profile</p>
@@ -346,10 +399,9 @@ function NavbarContent() {
           </div>
         )}
 
-        {/* Navigation Links List */}
         <div className="flex-1 py-4 px-3 space-y-1">
           {navLinks.map((link) => {
-            const isActive = pathname === link.path;
+            const isActive = pathname === link.path || pathname?.startsWith(`${link.path}/`);
             const IconComponent = link.icon;
             return (
               <Link
@@ -368,7 +420,18 @@ function NavbarContent() {
             );
           })}
 
-          {mounted && isAuthenticated && user?.isAdmin && (
+          {showAdminSlugEdit && (
+            <Link
+              href={editHref}
+              onClick={() => setDrawerOpen(false)}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-xs uppercase font-bold tracking-wider text-amber-400 bg-amber-500/10 border-l-2 border-amber-500 transition-colors"
+            >
+              <Icons.Edit />
+              <span>{editLabel}</span>
+            </Link>
+          )}
+
+          {mounted && isAuthenticated && isAdmin && (
             <Link
               href="/admin"
               onClick={() => setDrawerOpen(false)}
@@ -380,7 +443,6 @@ function NavbarContent() {
           )}
         </div>
 
-        {/* Drawer Footer / Auth Actions */}
         <div className="p-4 border-t border-gray-800/80 bg-[#0d1322]">
           {mounted && isAuthenticated ? (
             <button

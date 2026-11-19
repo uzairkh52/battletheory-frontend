@@ -6,7 +6,6 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchArticleBySlug } from '@/store/slices/articleSlice';
-import { Edit3, ShieldAlert } from 'lucide-react';
 
 const CommentSection = dynamic(() => import('@/components/CommentSection'), {
   ssr: false,
@@ -19,14 +18,7 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
   );
 
   const article = initialArticle || storeArticle;
-  const { user } = useAppSelector((state) => state.auth);
-
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showAllTags, setShowAllTags] = useState(false);
-
-  useEffect(() => {
-    setIsAdmin(Boolean(user?.isAdmin || user?.role === 'admin'));
-  }, [user]);
 
   useEffect(() => {
     if (slug && !initialArticle) {
@@ -67,7 +59,6 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
   if (!article) return null;
 
   const imageUrl = article.featuredImage || article.imageUrl || article.image;
-  const articleId = article._id || article.id;
 
   const sanitizedContent = (article.content || '')
     .replace(/\u00AD/g, '')
@@ -87,24 +78,6 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
         </Link>
       </div>
 
-      {isAdmin && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between shadow-lg backdrop-blur-sm sticky top-4 z-40">
-          <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase">
-            <ShieldAlert className="w-4 h-4 animate-pulse" />
-            <span>[ COMMANDER CLEARANCE: QUICK EDIT ACTIVE ]</span>
-          </div>
-          {articleId && (
-            <Link
-              href={`/admin/articles/edit/${articleId}`}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase rounded transition-colors"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit Article</span>
-            </Link>
-          )}
-        </div>
-      )}
-
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-2">
           <Link href="/articles" className="hover:text-amber-500 transition-colors">
@@ -113,15 +86,6 @@ export default function ArticleDetailClient({ slug, initialArticle }: { slug: st
           <span>/</span>
           <span className="text-amber-500 uppercase">{article.slug}</span>
         </div>
-
-        {isAdmin && articleId && (
-          <Link
-            href={`/admin/articles/edit/${articleId}`}
-            className="text-amber-500 hover:text-amber-400 text-[11px] font-bold uppercase underline flex items-center gap-1"
-          >
-            <Edit3 className="w-3 h-3" /> Edit Intel
-          </Link>
-        )}
       </div>
 
       <header className="border-b border-gray-800 pb-6 space-y-4">

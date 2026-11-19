@@ -1,40 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   createNews,
+  updateNews,
   fetchNewsCategories,
   createNewsCategory,
   deleteNewsCategory,
+  type NewsItem,
 } from '@/store/slices/newsSlice';
-
-import 'react-quill-new/dist/quill.snow.css';
-
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
-
-const QUILL_MODULES = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    ['image', 'link', 'video'],
-    ['clean'],
-  ],
-};
-
-const QUILL_FORMATS = [
-  'header',
-  'bold',
-  'italic',
-  'underline',
-  'strike',
-  'list',
-  'image',
-  'link',
-  'video',
-];
+import NewsRichEditor from './NewsRichEditor';
 
 const INITIAL_FORM = {
   title: '',
@@ -52,15 +28,25 @@ const isEmptyHtml = (html: string) => {
   return plainText.length === 0;
 };
 
-export default function NewsForm() {
+interface NewsFormProps {
+  initialData?: NewsItem | null;
+  onSuccess?: (item: NewsItem) => void;
+  onCancel?: () => void;
+}
+
+export default function NewsForm({ initialData = null, onSuccess, onCancel }: NewsFormProps) {
   const dispatch = useAppDispatch();
   const {
     creating,
+    updating,
     categories,
     categoriesLoading,
     categorySaving,
     categoryError,
   } = useAppSelector((state) => state.news);
+
+  const isEditMode = Boolean(initialData?._id);
+  const isSubmitting = isEditMode ? updating : creating;
 
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [showAddCat, setShowAddCat] = useState(false);
@@ -69,6 +55,27 @@ export default function NewsForm() {
   useEffect(() => {
     dispatch(fetchNewsCategories(true));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        category: initialData.category || '',
+        author: initialData.author || 'BattleTheory Editorial',
+        image: initialData.image || initialData.imageUrl || initialData.thumbnail || '',
+        summary: initialData.summary || '',
+        content: initialData.content || '',
+        tacticalAnalysis: initialData.tacticalAnalysis || '',
+        isPublished: initialData.isPublished ?? true,
+      });
+    } else {
+      setFormData((prev) => ({
+        ...INITIAL_FORM,
+        category: prev.category || categories[0]?.name || '',
+      }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData?._id]);
 
   useEffect(() => {
     if (!formData.category && categories.length > 0) {
@@ -134,9 +141,26 @@ export default function NewsForm() {
 
     const payload = {
       ...formData,
+      title: formData.title.trim(),
+      author: formData.author.trim() || 'BattleTheory Editorial',
       image: formData.image.trim(),
+      summary: formData.summary.trim(),
       category: formData.category || 'Defense',
     };
+
+    if (isEditMode && initialData?._id) {
+      const resultAction = await dispatch(
+        updateNews({ id: initialData._id, newsData: payload })
+      );
+
+      if (updateNews.fulfilled.match(resultAction)) {
+        alert('News briefing updated successfully!');
+        onSuccess?.(resultAction.payload);
+      } else {
+        alert((resultAction.payload as string) || 'Failed to update news briefing.');
+      }
+      return;
+    }
 
     const resultAction = await dispatch(createNews(payload));
 
@@ -146,23 +170,38 @@ export default function NewsForm() {
         category: prev.category,
       }));
       alert('Original news briefing created successfully!');
+      onSuccess?.(resultAction.payload);
     } else {
       alert((resultAction.payload as string) || 'Failed to create news briefing.');
     }
   };
 
   return (
-    <div className="bg-[#111827] border border-gray-800 rounded-lg p-6 text-white font-mono">
-      <div className="border-b border-gray-800 pb-3 mb-6">
-        <h2 className="text-sm font-black text-amber-500 uppercase tracking-wider">
-          Create Original News Briefing
-        </h2>
-        <p className="text-xs text-gray-400 mt-1">
-          Publish original editorial analysis and tactical assessments.
-        </p>
+    <div className="min-w-0 w-full bg-[#111827] border border-gray-800 rounded-lg p-5 sm:p-6 text-white font-mono">
+      <div className="flex items-start justify-between gap-3 border-b border-gray-800 pb-3 mb-6">
+        <div className="min-w-0">
+          <h2 className="text-sm font-black text-amber-500 uppercase tracking-wider">
+            {isEditMode ? 'Update News Briefing' : 'Create Original News Briefing'}
+          </h2>
+          <p className="text-xs text-gray-400 mt-1">
+            {isEditMode
+              ? 'Modify existing editorial analysis, summary, or tactical assessment.'
+              : 'Publish original editorial analysis and tactical assessments.'}
+          </p>
+        </div>
+
+        {onCancel && isEditMode && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-xs text-gray-400 hover:text-white underline cursor-pointer shrink-0"
+          >
+            Cancel Edit
+          </button>
+        )}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+      <form onSubmit={handleSubmit} className="space-y-4 text-xs min-w-0">
         <div>
           <label className="block text-gray-400 mb-1 uppercase font-bold">News Title *</label>
           <input
@@ -176,8 +215,7 @@ export default function NewsForm() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Article-style Category Add & Delete */}
-          <div>
+          <div className="min-w-0">
             <div className="flex justify-between items-center mb-1">
               <label className="block text-gray-400 uppercase font-bold">Category</label>
               <button
@@ -199,7 +237,7 @@ export default function NewsForm() {
                   placeholder="New Category Name..."
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
-                  className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white text-xs outline-none focus:border-amber-500"
+                  className="w-full min-w-0 bg-black border border-gray-800 rounded px-3 py-2 text-white text-xs outline-none focus:border-amber-500"
                 />
                 <button
                   type="button"
@@ -208,35 +246,9 @@ export default function NewsForm() {
                     e.preventDefault();
                     handleAddCategory();
                   }}
-                  className="bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-black font-bold px-3 text-xs uppercase rounded cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5"
+                  className="bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 text-black font-bold px-3 text-xs uppercase rounded cursor-pointer whitespace-nowrap"
                 >
-                  {categorySaving ? (
-                    <>
-                      <svg
-                        className="animate-spin h-3.5 w-3.5 text-black"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <span>Save</span>
-                  )}
+                  {categorySaving ? 'Saving...' : 'Save'}
                 </button>
               </div>
             ) : (
@@ -245,26 +257,20 @@ export default function NewsForm() {
                   required
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
+                  className="w-full min-w-0 bg-black border border-gray-800 rounded px-3 py-2 text-white focus:border-amber-500 outline-none text-xs"
                 >
                   <option value="" className="text-gray-500 bg-black">
                     {categoriesLoading ? '-- LOADING CATEGORIES --' : '-- SELECT CATEGORY --'}
                   </option>
-                  {categories.length > 0 ? (
-                    categories.map((cat) => (
-                      <option
-                        key={cat._id || cat.name}
-                        value={cat.name}
-                        className="bg-[#111827] text-white py-1"
-                      >
-                        {cat.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="" disabled className="text-gray-500">
-                      No news categories found (+ Add New to create)
+                  {categories.map((cat) => (
+                    <option
+                      key={cat._id || cat.name}
+                      value={cat.name}
+                      className="bg-[#111827] text-white py-1"
+                    >
+                      {cat.name}
                     </option>
-                  )}
+                  ))}
                 </select>
 
                 {selectedCategoryObj && (
@@ -276,7 +282,7 @@ export default function NewsForm() {
                       handleDeleteCategory(selectedCategoryObj.name);
                     }}
                     title="Delete selected category"
-                    className="bg-red-900/40 hover:bg-red-800 disabled:opacity-50 border border-red-800 text-red-400 font-bold px-3 text-xs rounded transition-colors cursor-pointer"
+                    className="bg-red-900/40 hover:bg-red-800 disabled:opacity-50 border border-red-800 text-red-400 font-bold px-3 text-xs rounded transition-colors cursor-pointer shrink-0"
                   >
                     ✕
                   </button>
@@ -289,7 +295,7 @@ export default function NewsForm() {
             )}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <label className="block text-gray-400 mb-1 uppercase font-bold">Author</label>
             <input
               type="text"
@@ -324,23 +330,10 @@ export default function NewsForm() {
           />
         </div>
 
-        {/* Rich Text Editor (ArticleFormFields style) */}
-        <div>
-          <label className="block text-gray-400 mb-1 uppercase font-bold">
-            Full Content (Rich Text Editor) *
-          </label>
-          <div className="bg-white text-black rounded overflow-hidden">
-            <ReactQuill
-              theme="snow"
-              value={formData.content}
-              onChange={(contentValue) => setFormData({ ...formData, content: contentValue })}
-              modules={QUILL_MODULES}
-              formats={QUILL_FORMATS}
-              placeholder="Detailed news article body text..."
-              className="min-h-[250px]"
-            />
-          </div>
-        </div>
+        <NewsRichEditor
+          value={formData.content}
+          onChange={(contentValue) => setFormData({ ...formData, content: contentValue })}
+        />
 
         <div>
           <label className="block text-gray-400 mb-1 uppercase font-bold">
@@ -368,13 +361,28 @@ export default function NewsForm() {
           </label>
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-gray-800">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
+          {onCancel && isEditMode && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold uppercase rounded text-xs cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
           <button
             type="submit"
-            disabled={creating}
-            className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold uppercase rounded text-xs transition disabled:opacity-50"
+            disabled={isSubmitting}
+            className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold uppercase rounded text-xs transition disabled:opacity-50 cursor-pointer"
           >
-            {creating ? 'Saving...' : 'Publish Briefing'}
+            {isSubmitting
+              ? isEditMode
+                ? 'Updating...'
+                : 'Saving...'
+              : isEditMode
+                ? 'Update Briefing'
+                : 'Publish Briefing'}
           </button>
         </div>
       </form>
