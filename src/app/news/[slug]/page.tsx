@@ -52,7 +52,7 @@ export async function generateMetadata({
   }
 
   const title = news.title ? `${news.title} | ${siteName}` : defaultTitle;
-  const cleanSummary = String(news.summary || '')
+  const cleanSummary = String(news.summary || news.description || '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -62,10 +62,16 @@ export async function generateMetadata({
       ? cleanSummary
       : `${cleanSummary ? `${cleanSummary} — ` : ''}${defaultDescription}`;
 
-  const rawImage = news.image || news.imageUrl || news.thumbnail || defaultImage;
+  const rawImage =
+    news.image ||
+    news.imageUrl ||
+    news.featuredImage ||
+    news.thumbnail ||
+    defaultImage;
+
   const imageUrl =
-    typeof rawImage === 'string' && rawImage.startsWith('http')
-      ? rawImage
+    typeof rawImage === 'string' && rawImage.trim().startsWith('http')
+      ? rawImage.trim()
       : defaultImage;
 
   return {
