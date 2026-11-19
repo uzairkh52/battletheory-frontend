@@ -7,31 +7,49 @@ export interface NewsItem {
   title: string;
   slug: string;
   category: string;
+  tags?: string[];
   summary: string;
   content: string;
   tacticalAnalysis?: string;
   image?: string;
   imageUrl?: string;
   thumbnail?: string;
+  imageAlt?: string;
   author?: string;
   source?: string;
   sourceUrl?: string;
   link?: string;
+  readingTime?: number;
+  isFeatured?: boolean;
+  isBreaking?: boolean;
   isPublished?: boolean;
+  publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface NewsCategoryItem {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  order?: number;
+  isActive?: boolean;
+  newsCount?: number;
 }
 
 interface FetchNewsParams {
   page?: number;
   limit?: number;
   category?: string;
+  search?: string;
   all?: boolean;
   append?: boolean;
 }
 
 interface NewsState {
   items: NewsItem[];
+  categories: NewsCategoryItem[];
   selectedNews: NewsItem | null;
   currentPage: number;
   totalPages: number;
@@ -39,14 +57,18 @@ interface NewsState {
   totalNews: number;
   loading: boolean;
   detailLoading: boolean;
+  categoriesLoading: boolean;
   creating: boolean;
   updating: boolean;
   deleting: boolean;
+  categorySaving: boolean;
   error: string | null;
+  categoryError: string | null;
 }
 
 const initialState: NewsState = {
   items: [],
+  categories: [],
   selectedNews: null,
   currentPage: 1,
   totalPages: 1,
@@ -54,24 +76,34 @@ const initialState: NewsState = {
   totalNews: 0,
   loading: false,
   detailLoading: false,
+  categoriesLoading: false,
   creating: false,
   updating: false,
   deleting: false,
+  categorySaving: false,
   error: null,
+  categoryError: null,
 };
 
-// 1. Fetch All News (Paginated + Category Filter)
+const NEWS_CATEGORIES_ENDPOINT =
+  (API_ENDPOINTS as any)?.NEWS_CATEGORIES?.LIST || '/news-categories';
+
+const newsCategoryByIdUrl = (id: string) =>
+  (API_ENDPOINTS as any)?.NEWS_CATEGORIES?.BY_ID?.(id) || `${NEWS_CATEGORIES_ENDPOINT}/${id}`;
+
+// 1. Fetch All News (Paginated + Category & Search Filter)
 export const fetchNewsList = createAsyncThunk(
   'news/fetchNewsList',
   async (params: FetchNewsParams = {}, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 20, category, all = false } = params;
+      const { page = 1, limit = 20, category, search, all = false } = params;
       const response = await API.get(API_ENDPOINTS.NEWS.LIST, {
         params: {
           page,
           limit,
           ...(all ? { all: 'true' } : {}),
           ...(category && category !== 'all' ? { category } : {}),
+          ...(search && search.trim() ? { search: search.trim() } : {}),
         },
       });
       return {
@@ -149,6 +181,84 @@ export const deleteNews = createAsyncThunk(
   }
 );
 
+// 6. Fetch News Categories
+export const fetchNewsCategories = createAsyncThunk(
+  'news/fetchNewsCategories',
+  async (all: boolean = true, { rejectWithValue }) => {
+    try {
+      const response = await API.get(NEWS_CATEGORIES_ENDPOINT, {
+        params: all ? { all: 'true' } : {},
+      });
+      return Array.isArray(response.data)
+        ? response.data
+        : (response.data?.categories as NewsCategoryItem[]) || [];
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to fetch news categories.'
+      );
+    }
+  }
+);
+
+// 7. Create News Category (Admin)
+export const createNewsCategory = createAsyncThunk(
+  'news/createNewsCategory',
+  async (
+    payload: { name: string; description?: string; order?: number; isActive?: boolean },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await API.post(NEWS_CATEGORIES_ENDPOINT, payload);
+      return response.data as NewsCategoryItem;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to create news category.'
+      );
+    }
+  }
+);
+
+// 8. Update News Category (Admin)
+export const updateNewsCategory = createAsyncThunk(
+  'news/updateNewsCategory',
+  async (
+    {
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<Pick<NewsCategoryItem, 'name' | 'description' | 'order' | 'isActive'>>;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await API.put(newsCategoryByIdUrl(id), data);
+      return response.data as NewsCategoryItem;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to update news category.'
+      );
+    }
+  }
+);
+
+// 9. Delete News Category (Admin)
+export const deleteNewsCategory = createAsyncThunk(
+  'news/deleteNewsCategory',
+  async ({ id, force = false }: { id: string; force?: boolean }, { rejectWithValue }) => {
+    try {
+      await API.delete(newsCategoryByIdUrl(id), {
+        params: force ? { force: 'true' } : {},
+      });
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Failed to delete news category.'
+      );
+    }
+  }
+);
+
 const newsSlice = createSlice({
   name: 'news',
   initialState,
@@ -158,6 +268,7 @@ const newsSlice = createSlice({
     },
     clearNewsError: (state) => {
       state.error = null;
+      state.categoryError = null;
     },
     resetNewsList: (state) => {
       state.items = [];
@@ -269,6 +380,74 @@ const newsSlice = createSlice({
       .addCase(deleteNews.rejected, (state, action) => {
         state.deleting = false;
         state.error = action.payload as string;
+      })
+
+      // Fetch News Categories
+      .addCase(fetchNewsCategories.pending, (state) => {
+        state.categoriesLoading = true;
+        state.categoryError = null;
+      })
+      .addCase(fetchNewsCategories.fulfilled, (state, action) => {
+        state.categoriesLoading = false;
+        state.categories = action.payload;
+      })
+      .addCase(fetchNewsCategories.rejected, (state, action) => {
+        state.categoriesLoading = false;
+        state.categoryError = action.payload as string;
+      })
+
+      // Create News Category
+      .addCase(createNewsCategory.pending, (state) => {
+        state.categorySaving = true;
+        state.categoryError = null;
+      })
+      .addCase(createNewsCategory.fulfilled, (state, action) => {
+        state.categorySaving = false;
+        state.categories.push({ ...action.payload, newsCount: 0 });
+      })
+      .addCase(createNewsCategory.rejected, (state, action) => {
+        state.categorySaving = false;
+        state.categoryError = action.payload as string;
+      })
+
+      // Update News Category
+      .addCase(updateNewsCategory.pending, (state) => {
+        state.categorySaving = true;
+        state.categoryError = null;
+      })
+      .addCase(updateNewsCategory.fulfilled, (state, action) => {
+        state.categorySaving = false;
+        const index = state.categories.findIndex((cat) => cat._id === action.payload._id);
+        if (index !== -1) {
+          const oldName = state.categories[index].name;
+          state.categories[index] = {
+            ...state.categories[index],
+            ...action.payload,
+          };
+          if (oldName !== action.payload.name) {
+            state.items = state.items.map((item) =>
+              item.category === oldName ? { ...item, category: action.payload.name } : item
+            );
+          }
+        }
+      })
+      .addCase(updateNewsCategory.rejected, (state, action) => {
+        state.categorySaving = false;
+        state.categoryError = action.payload as string;
+      })
+
+      // Delete News Category
+      .addCase(deleteNewsCategory.pending, (state) => {
+        state.categorySaving = true;
+        state.categoryError = null;
+      })
+      .addCase(deleteNewsCategory.fulfilled, (state, action) => {
+        state.categorySaving = false;
+        state.categories = state.categories.filter((cat) => cat._id !== action.payload);
+      })
+      .addCase(deleteNewsCategory.rejected, (state, action) => {
+        state.categorySaving = false;
+        state.categoryError = action.payload as string;
       });
   },
 });

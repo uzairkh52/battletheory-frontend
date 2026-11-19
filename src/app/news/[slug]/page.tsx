@@ -47,9 +47,11 @@ export default function NewsDetailPage() {
   }
 
   const image = selectedNews.image || selectedNews.imageUrl || selectedNews.thumbnail;
+  const imageAlt = selectedNews.imageAlt || selectedNews.title;
   const externalUrl = selectedNews.sourceUrl || selectedNews.link;
-  const formattedDate = selectedNews.createdAt
-    ? new Date(selectedNews.createdAt).toLocaleDateString('en-GB', {
+  const rawDate = selectedNews.publishedAt || selectedNews.createdAt;
+  const formattedDate = rawDate
+    ? new Date(rawDate).toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -73,10 +75,18 @@ export default function NewsDetailPage() {
           <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded font-bold">
             {selectedNews.category || 'Defense'}
           </span>
+          {selectedNews.isBreaking && (
+            <span className="text-red-400 bg-red-500/10 border border-red-500/30 px-2.5 py-0.5 rounded font-bold">
+              Breaking
+            </span>
+          )}
           <span className="text-gray-400">
             {selectedNews.author || selectedNews.source || 'BattleTheory Editorial'}
           </span>
           {formattedDate && <span className="text-gray-600">· {formattedDate}</span>}
+          {typeof selectedNews.readingTime === 'number' && selectedNews.readingTime > 0 && (
+            <span className="text-gray-500">· {selectedNews.readingTime} min read</span>
+          )}
         </div>
 
         <h1 className="font-sans text-2xl sm:text-4xl font-black leading-tight">
@@ -94,7 +104,7 @@ export default function NewsDetailPage() {
         <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-800 bg-gray-900">
           <img
             src={image}
-            alt={selectedNews.title}
+            alt={imageAlt}
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover"
           />
@@ -118,6 +128,19 @@ export default function NewsDetailPage() {
             {selectedNews.tacticalAnalysis}
           </p>
         </section>
+      )}
+
+      {Array.isArray(selectedNews.tags) && selectedNews.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-2">
+          {selectedNews.tags.map((tag) => (
+            <span
+              key={tag}
+              className="px-2.5 py-1 rounded bg-gray-900 border border-gray-800 font-mono text-[11px] text-gray-300"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
       )}
 
       {externalUrl && (

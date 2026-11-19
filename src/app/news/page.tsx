@@ -60,21 +60,30 @@ function NewsThumb({ src, alt, priority }: { src: string; alt: string; priority:
 function NewsCard({ item, priority }: { item: NewsItem; priority: boolean }) {
   const externalUrl = item.sourceUrl || item.link;
   const href = `/news/${item.slug || item._id}`;
-  const date = formatDate(item.createdAt);
+  const date = formatDate(item.publishedAt || item.createdAt);
   const author = item.author || item.source || 'BattleTheory Editorial';
   const summary = stripHtml(item.summary);
+  const alt = item.imageAlt || item.title || 'Briefing thumbnail';
 
   return (
     <article className="group relative flex gap-4 bg-[#111827] border border-gray-800 hover:border-amber-500/40 rounded-lg p-4 transition-colors">
-      <NewsThumb src={getImage(item)} alt={item.title || 'Briefing thumbnail'} priority={priority} />
+      <NewsThumb src={getImage(item)} alt={alt} priority={priority} />
 
       <div className="order-1 sm:order-2 flex-1 min-w-0 flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px] uppercase tracking-wider">
           <span className="text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded font-bold">
             {item.category || 'Defense'}
           </span>
+          {item.isBreaking && (
+            <span className="text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded font-bold">
+              Breaking
+            </span>
+          )}
           <span className="text-gray-400 truncate max-w-[12rem]">{author}</span>
           {date && <span className="text-gray-600">· {date}</span>}
+          {typeof item.readingTime === 'number' && item.readingTime > 0 && (
+            <span className="text-gray-500">· {item.readingTime} min read</span>
+          )}
         </div>
 
         <h2 className="font-sans text-[15px] sm:text-base font-bold text-white leading-snug line-clamp-3 sm:line-clamp-2 group-hover:text-amber-500 transition-colors">
