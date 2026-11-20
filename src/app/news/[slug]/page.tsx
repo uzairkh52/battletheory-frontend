@@ -32,7 +32,7 @@ export async function generateMetadata({
 
   if (!news) {
     return {
-      title: defaultTitle,
+      title: { absolute: defaultTitle },
       description: defaultDescription,
       openGraph: {
         type: 'website',
@@ -51,7 +51,9 @@ export async function generateMetadata({
     };
   }
 
-  const title = news.title ? `${news.title} | ${siteName}` : defaultTitle;
+  const cleanTitle = news.title ? String(news.title).trim() : '';
+  const ogTitle = cleanTitle ? `${cleanTitle} | ${siteName}` : defaultTitle;
+
   const cleanSummary = String(news.summary || news.description || '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
@@ -75,12 +77,12 @@ export async function generateMetadata({
       : defaultImage;
 
   return {
-    title,
+    title: cleanTitle || { absolute: defaultTitle },
     description,
     openGraph: {
       type: 'article',
       siteName,
-      title,
+      title: ogTitle,
       description,
       url: `https://www.battletheory.net/news/${slug}`,
       publishedTime: news.publishedAt || news.createdAt,
@@ -89,13 +91,13 @@ export async function generateMetadata({
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: news.imageAlt || news.title || siteName,
+          alt: news.imageAlt || cleanTitle || siteName,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: ogTitle,
       description,
       images: [imageUrl],
     },

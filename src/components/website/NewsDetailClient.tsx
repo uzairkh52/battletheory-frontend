@@ -13,6 +13,12 @@ interface NewsDetailClientProps {
   initialNews?: any;
 }
 
+const normalWrapStyle = {
+  overflowWrap: 'normal' as const,
+  wordBreak: 'normal' as const,
+  hyphens: 'none' as const,
+};
+
 export default function NewsDetailClient({ slugProp, initialNews }: NewsDetailClientProps) {
   const params = useParams<{ slug: string }>();
   const slug = slugProp || params?.slug;
@@ -68,15 +74,40 @@ export default function NewsDetailClient({ slugProp, initialNews }: NewsDetailCl
   const rawDate = selectedNews.publishedAt || selectedNews.createdAt;
   const formattedDate = rawDate
     ? new Date(rawDate).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-      })
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    })
     : '';
 
   return (
-    <article className="max-w-4xl mx-auto px-4 py-6 sm:py-10 space-y-6 text-white overflow-x-hidden min-w-0">
+    <article
+      style={normalWrapStyle}
+      className="news-article-body max-w-4xl mx-auto px-4 py-6 sm:py-10 space-y-6 text-white overflow-x-hidden min-w-0"
+    >
+      <style>{`
+        .news-article-body,
+        .news-article-body p,
+        .news-article-body h1,
+        .news-article-body h2,
+        .news-article-body h3,
+        .news-article-body h4,
+        .news-article-body li,
+        .news-article-body span,
+        .news-article-body div {
+          overflow-wrap: normal !important;
+          word-break: normal !important;
+          hyphens: none !important;
+        }
+        .news-article-body pre,
+        .news-article-body code {
+          white-space: pre-wrap !important;
+          overflow-wrap: anywhere !important;
+          word-break: break-word !important;
+        }
+      `}</style>
+
       <div>
         <Link
           href="/news"
@@ -105,12 +136,12 @@ export default function NewsDetailClient({ slugProp, initialNews }: NewsDetailCl
           )}
         </div>
 
-        <h1 className="font-sans text-2xl sm:text-4xl font-black leading-tight break-words">
+        <h1 className="font-sans text-2xl sm:text-4xl font-black leading-tight">
           {selectedNews.title}
         </h1>
 
         {selectedNews.summary && (
-          <p className="font-sans text-base text-gray-300 leading-relaxed break-words">
+          <p className="font-sans text-base text-gray-300 leading-relaxed">
             {selectedNews.summary}
           </p>
         )}
@@ -129,8 +160,17 @@ export default function NewsDetailClient({ slugProp, initialNews }: NewsDetailCl
 
       {selectedNews.content && (
         <div
-          className="prose prose-invert max-w-none w-full min-w-0 overflow-x-hidden font-sans text-gray-200 leading-relaxed space-y-4 break-words [&_p]:whitespace-normal [&_p]:break-words [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_*]:max-w-full"
-          dangerouslySetInnerHTML={{ __html: selectedNews.content }}
+          style={{
+            overflowWrap: 'normal',
+            wordBreak: 'normal',
+            hyphens: 'none',
+          }}
+          className="prose prose-invert max-w-none w-full min-w-0 font-sans text-gray-200 leading-relaxed space-y-4 [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto"
+          dangerouslySetInnerHTML={{
+            __html: String(selectedNews.content)
+              .replace(/\s(style|class)=["'][^"']*["']/gi, '')
+              .replace(/&nbsp;/gi, ' '),
+          }}
         />
       )}
 
@@ -140,7 +180,7 @@ export default function NewsDetailClient({ slugProp, initialNews }: NewsDetailCl
             <ShieldAlert className="w-4 h-4 shrink-0" />
             BattleTheory Tactical Assessment
           </div>
-          <p className="font-sans text-sm text-gray-200 leading-relaxed break-words">
+          <p className="font-sans text-sm text-gray-200 leading-relaxed">
             {selectedNews.tacticalAnalysis}
           </p>
         </section>
